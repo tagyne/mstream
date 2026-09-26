@@ -58,9 +58,10 @@ Ordre recommandé : `workspace` → `identity` → `platform-adapters` → `real
 - **API :** NestJS.
 - **Temps réel navigateur :** Socket.IO entre `apps/api` et `apps/web`.
 - **Persistance :** PostgreSQL avec TypeORM.
-- **Session/authentification applicative :** Better Auth, sous réserve de validation de l’intégration exacte avec les providers personnalisés.
+- **Session/authentification applicative :** Better Auth intégré à NestJS avec @thallesp/nestjs-better-auth (AuthModule, AuthGuard et session).
 - **Accès plateformes :** clients dédiés Twitch et Kick dans NestJS.
-- **Tunnel local Kick :** Cloudflare Tunnel nommé avec hostname stable.
+- **Tests web :** Vitest uniquement dans apps/web pour les tests React et la logique cliente. Aucun usage de Vitest dans apps/api.
+- **Tunnel local Kick :** Cloudflare Tunnel nommé avec hostname stable, configuré uniquement dans la phase finale.
 - **Conteneurisation :** Docker Compose distinct pour le développement local et la production locale.
 
 Les versions exactes seront fixées lors du scaffold après vérification de la documentation officielle de chaque dépendance. Le dépôt actuel ne contient pas encore de `package.json`.
@@ -72,7 +73,7 @@ apps/web (React + SSG/CSR)
         │ Socket.IO + API HTTP
         ▼
 apps/api (NestJS)
- ├── Better Auth / sessions
+ ├── Better Auth + @thallesp/nestjs-better-auth / sessions
  ├── Platform Connections / token vault
  ├── Twitch Adapter
  │    └── EventSub WebSocket + Helix REST
@@ -86,10 +87,10 @@ apps/api (NestJS)
 
 Le projet fournit deux environnements explicitement séparés :
 
-- `compose.dev.yaml` : développement local avec hot reload, montage contrôlé du code source, logs lisibles, PostgreSQL de développement et Cloudflare Tunnel de développement.
+- `compose.dev.yaml` : développement local avec hot reload, montage contrôlé du code source, logs lisibles, PostgreSQL de développement et PostgreSQL de développement. Aucun DNS ni tunnel public n’est requis.
 - `compose.prod.yaml` : production locale avec images multi-stage buildées, aucun montage du code source, variables de production séparées, healthchecks, volumes nommés et redémarrage automatique.
 
-Les deux environnements utilisent des noms de projets Compose différents afin d’éviter de partager accidentellement les conteneurs, réseaux ou volumes. Les données PostgreSQL de développement et de production locale sont séparées. Le tunnel Cloudflare utilise une configuration et un token dédiés à l’environnement actif.
+Les deux environnements utilisent des noms de projets Compose différents afin d’éviter de partager accidentellement les conteneurs, réseaux ou volumes. Les données PostgreSQL de développement et de production locale sont séparées. Le tunnel Cloudflare est ajouté uniquement dans la phase finale ; les tests Kick locaux utilisent des fixtures signées.
 
 La production locale reste une installation monoposte : elle ne constitue pas encore une stratégie de déploiement cloud, de haute disponibilité ou de scaling horizontal.
 
@@ -236,7 +237,8 @@ Le formulaire envoie les changements souhaités par plateforme. L’API traduit 
 
 - Unitaires : normalisation des payloads, validation OAuth state/PKCE, chiffrement, déduplication, mapping des erreurs.
 - Intégration : repository TypeORM, callbacks OAuth, refresh/revocation, adapters avec clients HTTP mockés.
-- Webhook : signature Kick valide/invalide, replay d’un même message, réponse rapide et événements inconnus.
+- Vitest web : composants React, routing, états vides/reconnexion, composeur et contrats clients mockés. Les tests API utilisent un framework distinct, à choisir avant l’implémentation backend.
+- Webhook : signature Kick valide/invalide, replay, réponse rapide et événements inconnus avec fixtures locales.
 - Temps réel : EventSub Twitch, reconnexion, resouscription et publication Socket.IO.
 - E2E : connexion Twitch/Kick, chat entrant, fil d’événements, envoi ciblé/multiple et mise à jour du titre.
 
@@ -250,7 +252,7 @@ Le formulaire envoie les changements souhaités par plateforme. L’API traduit 
 - Un refresh token permet de maintenir la connexion sans intervention pendant un live.
 - Les webhooks Kick invalides ou dupliqués ne modifient pas la session.
 - Aucun secret de plateforme n’est présent dans le bundle web ou les logs.
-- Le tunnel Cloudflare nommé démarre avec l’environnement local et l’URL reste stable.
+- Après la validation du MVP local, le tunnel Cloudflare nommé démarre avec l’environnement prévu et l’URL reste stable.
 
 ## 11. Commandes proposées
 
@@ -260,13 +262,14 @@ Les scripts seront ajoutés lors du scaffold :
 pnpm install
 pnpm dev                         # lance compose.dev.yaml
 pnpm dev:down
-pnpm dev:tunnel
 pnpm prod:build                  # build les images de production locale
 pnpm prod:up                     # lance compose.prod.yaml
 pnpm prod:down
 pnpm prod:logs
 pnpm build
-pnpm test
+pnpm --filter @mstream/web test
+pnpm --filter @mstream/web test:watch
+pnpm --filter @mstream/web test:coverage
 pnpm test:e2e
 pnpm lint
 pnpm typecheck
@@ -311,12 +314,13 @@ docker compose -f compose.prod.yaml down
 
 ## 13. Points à valider avant implémentation
 
-- [ ] Compatibilité exacte de Better Auth avec deux connexions OAuth de plateformes distinctes et stockage des scopes/tokens requis.
+- [ ] Validation de l’intégration @thallesp/nestjs-better-auth avec les callbacks OAuth et le stockage des comptes liés.
 - [ ] Domaine Cloudflare disponible et zone gérée par Cloudflare.
 - [ ] Création/configuration des applications développeur Twitch et Kick.
 - [ ] Validation pratique des scopes et abonnements EventSub/Kick sur les comptes de test.
 - [ ] Stratégie locale PostgreSQL : service natif ou Docker.
 - [ ] Noms des fichiers Compose et stratégie de gestion des secrets locaux.
 - [ ] Image de service retenue pour servir le build SSG du frontend en production locale.
-- [ ] Framework de test retenu pour le workspace.
+- [ ] Framework de tests API à retenir, distinct de Vitest.
+- [ ] Framework E2E navigateur à retenir en complément de Vitest web.
 

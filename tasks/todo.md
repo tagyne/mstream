@@ -4,12 +4,14 @@
 
 ### Task 1 — Scaffolder le monorepo pnpm
 
-**Description :** créer `apps/api`, `apps/web` et `packages/contracts` avec les scripts workspace de base.
+**Description :** créer `apps/api`, `apps/web` et `packages/contracts` avec les scripts workspace de base et Vitest.
 
 **Acceptance criteria:**
 - [ ] `pnpm install` fonctionne depuis la racine.
 - [ ] `apps/api` démarre NestJS et `apps/web` démarre React.
 - [ ] Les scripts `dev`, `build`, `test`, `lint` et `typecheck` sont définis.
+- [ ] Vitest est configuré uniquement dans apps/web avec `test:watch` et `test:coverage`.
+- [ ] Aucun package, script ou test API n’utilise Vitest.
 
 **Verification:** `pnpm install && pnpm build && pnpm typecheck`.
 
@@ -68,11 +70,12 @@
 **Files likely touched:** `compose.prod.yaml`, `Dockerfile.prod`, `.env.prod.example`, configuration du serveur statique web.
 
 **Estimated scope:** Medium.
-### Task 5 — Valider Better Auth et les deux connexions OAuth
+### Task 5 — Valider Better Auth, son adaptateur NestJS et les deux connexions OAuth
 
 **Acceptance criteria:**
 - [ ] Le callback Twitch fonctionne avec state et scopes minimaux.
 - [ ] Le callback Kick fonctionne avec OAuth 2.1 + PKCE.
+- [ ] @thallesp/nestjs-better-auth est intégré via AuthModule et AuthGuard.
 - [ ] Les tokens ne sont jamais retournés au navigateur.
 - [ ] La décision d’architecture Better Auth/platform connections est documentée.
 
@@ -84,26 +87,25 @@
 
 **Estimated scope:** Large, à découper si le spike dépasse une session.
 
-### Task 6 — Configurer le Cloudflare Tunnel nommé
+### Task 6 — Préparer le webhook Kick local et ses fixtures signées
 
 **Acceptance criteria:**
-- [ ] `pnpm dev:tunnel` expose uniquement le endpoint webhook.
-- [ ] Le hostname reste stable après redémarrage.
-- [ ] Le token du tunnel vient d’une variable d’environnement.
-- [ ] L’URL à saisir une seule fois dans Kick est documentée.
+- [ ] L’endpoint webhook Kick fonctionne sur l’API locale sans exposition publique.
+- [ ] Une fixture signée valide est acceptée et une fixture invalide est rejetée.
+- [ ] Aucun DNS Cloudflare n’est nécessaire.
 
-**Verification:** redémarrer le tunnel et envoyer une requête de test au endpoint.
+**Verification:** tests du module API avec fixtures locales ; le framework de test API reste distinct de Vitest web.
 
 **Dependencies:** Tasks 1, 3.
 
-**Files likely touched:** `cloudflared/*`, `package.json`, `.env.example`, `docs/local-development.md`.
+**Files likely touched:** `apps/api/src/platforms/kick/webhooks/*`, `tests/fixtures/kick/*`, `docs/local-development.md`.
 
 **Estimated scope:** Small.
 
 ## Checkpoint 1 — Fondations
 
 - [ ] Tasks 1 à 6 validées.
-- [ ] OAuth et tunnel confirmés avec comptes de test.
+- [ ] OAuth confirmé et webhook local testé avec fixtures ; aucun tunnel n’est requis.
 - [ ] Aucun secret présent dans Git.
 
 ## Phase 2 — Contrats et Twitch
@@ -279,14 +281,15 @@
 
 **Estimated scope:** Medium.
 
-### Task 17 — Parcours E2E et hardening du MVP
+### Task 17 — Parcours E2E et hardening du MVP local
 
 **Acceptance criteria:**
 - [ ] Connexion, réception, fil, envoi et mise à jour sont couverts.
 - [ ] Les secrets et tokens n’apparaissent pas dans les bundles/logs.
 - [ ] Build, lint, typecheck et tests passent.
+- [ ] Le webhook est vérifié avec fixtures locales, sans Cloudflare.
 
-**Verification:** `pnpm test`, `pnpm test:e2e`, `pnpm build`, `pnpm lint`, `pnpm typecheck`.
+**Verification:** `pnpm --filter @mstream/web test`, `pnpm test:e2e`, `pnpm build`, `pnpm lint`, `pnpm typecheck` et la commande de tests API retenue.
 
 **Dependencies:** Tasks 1-16.
 
@@ -294,9 +297,31 @@
 
 **Estimated scope:** Large, à découper si nécessaire.
 
-## Checkpoint final
+## Checkpoint MVP local
 
 - [ ] Tous les critères de la spec sont satisfaits.
 - [ ] Le MVP fonctionne avec Twitch et Kick sur une session réelle.
 - [ ] Le plan d’implémentation est mis à jour avec les écarts constatés.
 - [ ] Revue humaine avant ajout de YouTube ou de l’historique permanent.
+
+## Phase 5 — Exposition Kick finale
+
+### Task 18 — Configurer le Cloudflare Tunnel nommé
+
+**Description :** exposer publiquement le webhook Kick uniquement après validation du MVP local.
+
+**Acceptance criteria:**
+- [ ] DNS et tunnel nommé avec hostname stable.
+- [ ] Token Cloudflare dans un secret local non commité.
+- [ ] Webhook Kick public avec validation de signature conservée.
+- [ ] Dev et prod local utilisent des identifiants séparés.
+
+**Verification:** test HTTP public puis événement Kick réel.
+
+**Dependencies:** Task 17.
+
+**Estimated scope:** Medium.
+
+## Checkpoint de livraison
+
+- [ ] Task 18 validée.

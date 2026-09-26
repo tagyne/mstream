@@ -7,14 +7,15 @@ Construire un monorepo pnpm avec `apps/api` NestJS et `apps/web` React. Le backe
 ## Décisions d’architecture
 
 - Les plateformes sont isolées derrière `TwitchAdapter` et `KickAdapter`.
-- Twitch utilise EventSub WebSocket ; Kick utilise Events API/Webhooks via Cloudflare Tunnel nommé.
+- Twitch utilise EventSub WebSocket ; Kick utilise Events API/Webhooks. Les tests locaux utilisent des fixtures signées ; le tunnel est configuré en dernière phase.
 - Les contrats unifiés sont partagés dans `packages/contracts`.
 - Les tokens ne quittent jamais l’API et sont chiffrés en base.
 - Le fil d’actualité et le chat sont en mémoire pendant la session uniquement.
 - Les pages publiques sont SSG ; le dashboard est rendu côté client.
 - Les envois multi-plateformes sont indépendants et retournent un résultat par plateforme.
 - Le développement et la production locale utilisent deux configurations Docker Compose séparées.
-- Les volumes PostgreSQL, variables d’environnement et tokens Cloudflare sont isolés entre les deux environnements.
+- Les volumes PostgreSQL et variables d’environnement sont isolés entre les deux environnements. Les variables/tokens Cloudflare arrivent avec la tâche finale.
+- Vitest est réservé à apps/web pour les tests React et la logique cliente. apps/api utilisera un framework de tests distinct, à choisir avant l’implémentation backend.
 
 ## Dépendances
 
@@ -31,20 +32,21 @@ workspace
 
 ### Phase 1 — Fondations et spike à risque
 
-1. Scaffold du monorepo pnpm et des deux apps.
+1. Scaffold du monorepo pnpm, des deux apps et de Vitest dans apps/web.
 2. Ajouter l’environnement Docker de développement.
 3. Ajouter l’environnement Docker de production locale.
 4. Configurer PostgreSQL, TypeORM et les variables d’environnement.
-5. Réaliser le spike OAuth Twitch/Kick et confirmer Better Auth.
-6. Configurer le Cloudflare Tunnel nommé et le callback webhook Kick.
+5. Réaliser le spike OAuth Twitch/Kick avec Better Auth et @thallesp/nestjs-better-auth.
+6. Préparer le webhook Kick local et ses fixtures signées, sans DNS ni tunnel.
 
 ### Checkpoint 1
 
 - Le workspace s’installe et se build.
 - Les environnements Docker dev et prod local démarrent séparément.
 - Les deux providers OAuth retournent une identité de test.
-- Le webhook Kick reçoit une requête via hostname stable.
-- Les décisions Better Auth et tunnel sont confirmées.
+- Le webhook Kick accepte une fixture valide et rejette une signature invalide.
+- L’intégration Better Auth/NestJS est confirmée.
+- Aucun Cloudflare n’est requis.
 
 ### Phase 2 — Contrats et intégration Twitch
 
@@ -78,18 +80,27 @@ workspace
 16. Construire le panneau titre/catégorie et les états vide/reconnexion.
 17. Réaliser l’E2E d’un live Twitch + Kick et corriger les défauts bloquants.
 
-### Checkpoint final
+### Checkpoint MVP local
 
 - Le parcours complet fonctionne sur une session réelle de test.
 - Aucun secret n’est exposé au navigateur ou dans les logs.
-- Build, typecheck, lint, tests unitaires, intégration et E2E passent.
+- Build, typecheck, lint, tests web Vitest, tests API dédiés et E2E passent.
 - Le MVP respecte les exclusions de la spec.
+
+### Phase 5 — Exposition Kick finale
+
+18. Configurer le Cloudflare Tunnel nommé et la livraison réelle des webhooks Kick.
+
+### Checkpoint de livraison
+
+- Le DNS et le tunnel sont configurés après validation du MVP local.
+- Les environnements dev et prod local utilisent des secrets Cloudflare séparés.
 
 ## Risques et mitigations
 
 | Risque | Impact | Mitigation |
 |---|---:|---|
-| Kick webhook indisponible en local direct | Élevé | Cloudflare Tunnel nommé, endpoint dédié et test de signature |
+| Kick webhook indisponible en local direct | Élevé | Fixtures signées d’abord ; tunnel nommé uniquement en dernière phase |
 | Better Auth ne couvre pas exactement les connexions Twitch/Kick | Élevé | Spike OAuth avant le reste ; session Better Auth séparée de `platform_connections` si nécessaire |
 | Scopes ou quotas changent | Élevé | Adapter isolé, scopes minimaux, tests contractuels et documentation officielle référencée |
 | Doublons/reconnexions | Moyen | Idempotence par identifiant externe, état de transport et tests de replay |
@@ -101,7 +112,7 @@ workspace
 
 - Après les contrats partagés, Twitch et Kick peuvent être développés en parallèle.
 - Le frontend peut commencer sur des fixtures après validation des contrats.
-- OAuth, migrations TypeORM et configuration du tunnel restent séquentiels.
+- OAuth et migrations TypeORM restent séquentiels. Le tunnel est repoussé après le MVP local.
 
 ## Garde-fou avant implémentation
 
