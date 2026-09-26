@@ -1,0 +1,46 @@
+{
+  "name": "@mstream/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && nest build -p tsconfig.build.json",
+    "dev": "nest start --watch",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsx --test 'src/**/*.test.ts'",
+    "migration:run": "tsx node_modules/typeorm/cli.js migration:run -d src/database/data-source.ts",
+    "migration:revert": "tsx node_modules/typeorm/cli.js migration:revert -d src/database/data-source.ts",
+    "test:e2e": "tsx --test 'src/**/*.e2e.test.ts'"
+  },
+  "dependencies": {
+    "@mstream/contracts": "workspace:*",
+    "@nestjs/common": "^11.0.11",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.0.11",
+    "@nestjs/platform-express": "^11.0.11",
+    "@nestjs/platform-socket.io": "^11.2.6",
+    "@nestjs/typeorm": "^11.0.0",
+    "@nestjs/websockets": "^11.2.6",
+    "@thallesp/nestjs-better-auth": "^2.8.0",
+    "better-auth": "^1.7.6",
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "socket.io": "^4.8.3",
+    "typeorm": "^0.3.27",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.10",
+    "@nestjs/schematics": "^11.0.5",
+    "@nestjs/testing": "^11.0.11",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.3.0",
+    "@types/pg": "^8.23.1",
+    "@types/ws": "^8.18.1",
+    "socket.io-client": "^4.8.4",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2"
+  }
+}

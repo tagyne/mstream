@@ -1,0 +1,13 @@
+{
+  "name": "mstream",
+  "private": true,
+  "packageManager": "pnpm@11.21.0",
+  "scripts": {
+    "build": "pnpm --filter @mstream/contracts build && pnpm --filter @mstream/api build && pnpm --filter @mstream/web build",
+    "dev": "pnpm --parallel --filter @mstream/api --filter @mstream/web dev",
+    "lint": "pnpm --filter @mstream/contracts build && pnpm --recursive lint",
+    "test": "pnpm --filter @mstream/web test",
+    "typecheck": "pnpm --filter @mstream/contracts build && pnpm --filter @mstream/api typecheck && pnpm --filter @mstream/web typecheck",
+    "test:e2e": "pnpm --filter @mstream/api test:e2e && pnpm --filter @mstream/web test"
+  }
+}
