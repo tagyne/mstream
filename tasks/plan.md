@@ -15,7 +15,14 @@ Construire un monorepo pnpm avec `apps/api` NestJS et `apps/web` React. Le backe
 - Les envois multi-plateformes sont indépendants et retournent un résultat par plateforme.
 - Le développement et la production locale utilisent deux configurations Docker Compose séparées.
 - Les volumes PostgreSQL et variables d’environnement sont isolés entre les deux environnements. Les variables/tokens Cloudflare arrivent avec la tâche finale.
-- Vitest est réservé à apps/web pour les tests React et la logique cliente. apps/api utilisera un framework de tests distinct, à choisir avant l’implémentation backend.
+- Vitest est réservé à apps/web pour les tests React et la logique cliente. apps/api utilise le runner natif `node:test` via `tsx`, ce qui respecte la séparation des frameworks.
+- Better Auth utilise un `pg.Pool` direct pour ses tables standard, tandis que les tables mstream et le schéma Better Auth sont versionnés dans les migrations TypeORM.
+- Le build de production API utilise un tsconfig dédié qui exclut les tests et leurs fixtures de l’artefact runtime.
+- Le callback OAuth Twitch démarre le runtime EventSub partagé ; un refresh de token redémarre ce runtime avec le nouveau token.
+- Les commandes utilisateur appellent le refresh de token avant de déchiffrer et transmettre un credential à un adapter.
+- Better Auth active l’inscription/connexion email-mot de passe ; `/login` pilote la session locale et les liaisons OAuth, avec proxy API en développement et en production locale.
+- Les tests E2E API utilisent `socket.io-client` en dépendance de développement pour vérifier le namespace `/live` sur un vrai transport réseau.
+- Les tunnels Cloudflare sont des overrides Compose opt-in distincts pour dev et prod ; le token reste dans l’environnement local et le hostname/ingress reste géré dans Cloudflare.
 
 ## Dépendances
 
