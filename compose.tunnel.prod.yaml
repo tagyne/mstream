@@ -1,0 +1,11 @@
+name: mstream-prod
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN for the prod named tunnel}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started

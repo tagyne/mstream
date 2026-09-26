@@ -1,0 +1,50 @@
+name: mstream-dev
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mstream}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-dev}
+      POSTGRES_DB: ${POSTGRES_DB:-mstream_dev}
+    ports:
+      - "5433:5432"
+    volumes:
+      - mstream-dev-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mstream} -d ${POSTGRES_DB:-mstream_dev}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: pnpm --filter @mstream/api dev
+    env_file: .env.dev
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-mstream}:${POSTGRES_PASSWORD:-change-me-dev}@postgres:5432/${POSTGRES_DB:-mstream_dev}
+    ports:
+      - "${API_PORT:-3000}:3000"
+    volumes:
+      - .:/workspace
+      - mstream-dev-node-modules:/workspace/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: pnpm --filter @mstream/web dev --host 0.0.0.0
+    ports:
+      - "${WEB_PORT:-5173}:5173"
+    volumes:
+      - .:/workspace
+      - mstream-dev-node-modules:/workspace/node_modules
+    depends_on:
+      - api
+volumes:
+  mstream-dev-postgres:
+    name: mstream-dev-postgres
+  mstream-dev-node-modules:
+    name: mstream-dev-node-modules
