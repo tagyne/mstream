@@ -8,16 +8,22 @@
 
 ```text
 src/
-├── routes/       # accueil, connexion, aide, dashboard
+├── pages/        # accueil, connexion, aide, dashboard
 ├── features/
 │   ├── chat/
 │   ├── activity/
 │   ├── composer/
 │   └── stream-settings/
-├── components/   # primitives et composants shadcn/ui
+├── components/   # primitives UI réutilisables (composants/ui)
 ├── lib/           # client API, Socket.IO, formatage
 └── styles/
 ```
+
+## Système visuel
+
+- Les tokens de couleur, espacement, rayon et largeur sont définis dans `src/styles.css` sous forme de variables CSS sémantiques.
+- Réutiliser `src/components/ui/` pour les contrôles partagés et les classes de surface (`.surface`, `.panel`, `.composer`) pour les conteneurs.
+- Garder les états clavier, focus visible, désactivé et responsive cohérents avec les primitives communes.
 
 ## Règles spécifiques
 
