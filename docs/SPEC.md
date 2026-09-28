@@ -53,12 +53,12 @@ Ordre recommandé : `workspace` → `identity` → `platform-adapters` → `real
 
 - **Monorepo :** pnpm workspace.
 - **Applications :** `apps/web` et `apps/api`.
-- **Web :** React, React Router, shadcn/ui.
+- **Web :** React, React Router, shadcn/ui avec primitives Base UI pour les contrôles partagés ; Formik et Yup pour les formulaires du dashboard.
 - **Rendu :** SSG pour les pages statiques ; rendu client pour le dashboard.
 - **API :** NestJS.
 - **Temps réel navigateur :** Socket.IO entre `apps/api` et `apps/web`.
 - **Persistance :** PostgreSQL avec TypeORM.
-- **Session/authentification applicative :** Better Auth intégré à NestJS avec @thallesp/nestjs-better-auth (AuthModule, AuthGuard et session).
+- **Session/authentification applicative :** Better Auth intégré à NestJS avec @thallesp/nestjs-better-auth (AuthModule, AuthGuard et session) ; connexion sociale Twitch/Kick, sans email/mot de passe.
 - **Accès plateformes :** clients dédiés Twitch et Kick dans NestJS.
 - **Tests web :** Vitest uniquement dans apps/web pour les tests React et la logique cliente. Aucun usage de Vitest dans apps/api.
 - **Tunnel local Kick :** Cloudflare Tunnel nommé avec hostname stable, configuré uniquement dans la phase finale.
@@ -90,7 +90,7 @@ Le projet fournit deux environnements explicitement séparés :
 - `compose.dev.yaml` : développement local avec hot reload, montage contrôlé du code source, logs lisibles, PostgreSQL de développement et PostgreSQL de développement. Aucun DNS ni tunnel public n’est requis.
 - `compose.prod.yaml` : production locale avec images multi-stage buildées, aucun montage du code source, variables de production séparées, healthchecks, volumes nommés et redémarrage automatique.
 
-Les deux environnements utilisent des noms de projets Compose différents afin d’éviter de partager accidentellement les conteneurs, réseaux ou volumes. Les données PostgreSQL de développement et de production locale sont séparées. Le tunnel Cloudflare est ajouté uniquement dans la phase finale ; les tests Kick locaux utilisent des fixtures signées.
+Les fichiers `.env` propres à l’API résident dans `apps/api/`. Les environnements Compose sont chargés explicitement avec `--env-file apps/api/.env.dev` ou `--env-file apps/api/.env.prod`. Les deux environnements utilisent des noms de projets Compose différents afin d’éviter de partager accidentellement les conteneurs, réseaux ou volumes. Les données PostgreSQL de développement et de production locale sont séparées. Le tunnel Cloudflare est ajouté uniquement dans la phase finale ; les tests Kick locaux utilisent des fixtures signées.
 
 La production locale reste une installation monoposte : elle ne constitue pas encore une stratégie de déploiement cloud, de haute disponibilité ou de scaling horizontal.
 
@@ -139,9 +139,9 @@ Sources :
 
 ### Données persistées
 
-- `users` : identité applicative.
-- Tables Better Auth : sessions et comptes liés.
-- `platform_connections` : utilisateur, plateforme, identifiant externe, scopes accordés, expiration, refresh token chiffré, statut de connexion et dernière erreur.
+- `user` : identité applicative créée par la première connexion sociale Better Auth.
+- Tables Better Auth : `user`, `session`, `account`, `verification` et `rateLimit` ; `account` conserve les jetons OAuth chiffrés.
+- Les statuts de connexion des plateformes restent dans la session live en mémoire ; Better Auth reste la source des comptes liés et du renouvellement des jetons.
 - `stream_profiles` : identifiants de chaînes et configuration minimale nécessaire pour Twitch/Kick.
 
 Les access tokens et refresh tokens sont chiffrés au repos. Aucun token ne doit être envoyé au navigateur.
@@ -186,13 +186,11 @@ Les événements entrants sont normalisés par les adapters. Le dashboard ne con
 
 ### Connexion d’une plateforme
 
-1. L’utilisateur choisit Twitch ou Kick dans la page de connexion.
-2. `apps/api` génère `state`, PKCE si requis, scopes minimaux et redirect URI.
-3. La plateforme redirige vers le callback NestJS.
-4. L’API échange le code, valide l’identité et chiffre les tokens.
-5. L’API crée ou met à jour `platform_connections`.
-6. L’API démarre le transport entrant de la plateforme.
-7. Le frontend reçoit le nouvel état `connected` via Socket.IO.
+1. L’utilisateur choisit Twitch ou Kick sur la page de connexion.
+2. Sans session, le frontend appelle `/api/auth/sign-in/social` ; avec session, il appelle `/api/auth/link-social` pour lier l’autre plateforme.
+3. Better Auth pilote `state`, PKCE si requis, callback, échange du code et persistance chiffrée des jetons dans `account`.
+4. Le hook de compte met à jour le statut de la session live et démarre EventSub Twitch si nécessaire.
+5. Le frontend retrouve le dashboard après la redirection ; Socket.IO transmet le statut `connected`.
 
 ### Réception d’un événement
 
@@ -235,8 +233,8 @@ Le formulaire envoie les changements souhaités par plateforme. L’API traduit 
 
 ### Tests
 
-- Unitaires : normalisation des payloads, validation OAuth state/PKCE, chiffrement, déduplication, mapping des erreurs.
-- Intégration : repository TypeORM, callbacks OAuth, refresh/revocation, adapters avec clients HTTP mockés.
+- Unitaires : normalisation des payloads, configuration des providers Better Auth, chiffrement, déduplication, mapping des erreurs.
+- Intégration : entités/repositories TypeORM, hooks des comptes Better Auth, renouvellement des jetons et adapters avec clients HTTP mockés.
 - Vitest web : composants React, routing, états vides/reconnexion, composeur et contrats clients mockés. Les tests API utilisent un framework distinct, à choisir avant l’implémentation backend.
 - Webhook : signature Kick valide/invalide, replay, réponse rapide et événements inconnus avec fixtures locales.
 - Temps réel : EventSub Twitch, reconnexion, resouscription et publication Socket.IO.
@@ -278,10 +276,12 @@ pnpm typecheck
 Commandes Docker équivalentes documentées :
 
 ```bash
-docker compose -f compose.dev.yaml up --build
+cp apps/api/.env.dev.example apps/api/.env.dev
+docker compose --env-file apps/api/.env.dev -f compose.dev.yaml up --build
 docker compose -f compose.dev.yaml down
-docker compose -f compose.prod.yaml build
-docker compose -f compose.prod.yaml up -d
+cp apps/api/.env.prod.example apps/api/.env.prod
+docker compose --env-file apps/api/.env.prod -f compose.prod.yaml build
+docker compose --env-file apps/api/.env.prod -f compose.prod.yaml up -d
 docker compose -f compose.prod.yaml down
 ```
 
