@@ -87,7 +87,8 @@ apps/api (NestJS)
 
 Le projet fournit deux environnements explicitement séparés :
 
-- `compose.dev.yaml` : développement local avec hot reload, montage contrôlé du code source, logs lisibles, PostgreSQL de développement et PostgreSQL de développement. Aucun DNS ni tunnel public n’est requis.
+- `compose.dev.yaml` : développement local avec hot reload, montage contrôlé du code source, logs lisibles, PostgreSQL de développement et PostgreSQL de développement. Aucun DNS public ni tunnel public n’est requis.
+- Dans Compose de développement, Vite relaie `/api` et `/commands` vers `http://api:3000` sur le réseau interne ; hors Docker, la cible par défaut reste `http://localhost:3000`.
 - `compose.prod.yaml` : production locale avec images multi-stage buildées, aucun montage du code source, variables de production séparées, healthchecks, volumes nommés et redémarrage automatique.
 
 Les fichiers `.env` propres à l’API résident dans `apps/api/`. Les environnements Compose sont chargés explicitement avec `--env-file apps/api/.env.dev` ou `--env-file apps/api/.env.prod`. Les deux environnements utilisent des noms de projets Compose différents afin d’éviter de partager accidentellement les conteneurs, réseaux ou volumes. Les données PostgreSQL de développement et de production locale sont séparées. Le tunnel Cloudflare est ajouté uniquement dans la phase finale ; les tests Kick locaux utilisent des fixtures signées.
