@@ -3,7 +3,9 @@ import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import type { Server, Socket } from 'socket.io';
 import { LiveSession } from '../live-session/live-session';
 
-const socketOrigins = (process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? 'http://localhost:5173,http://localhost:8080')
+const socketOrigins = (
+  process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? 'http://localhost:5173,http://localhost:8080'
+)
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);

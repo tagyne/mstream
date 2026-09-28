@@ -8,15 +8,17 @@
 
 ```text
 src/
-├── auth/                 # session applicative et callbacks OAuth
-├── database/             # TypeORM, migrations, repositories
-├── platform-connections/ # comptes liés, scopes, tokens chiffrés
-├── platforms/
-│   ├── twitch/            # OAuth, Helix, EventSub WebSocket
-│   └── kick/              # OAuth, Public API, webhooks signés
-├── live-session/          # chat/événements en mémoire
-├── realtime/              # gateway Socket.IO
-└── shared/                # erreurs, validation, configuration
+├── auth.ts               # configuration Better Auth et providers Twitch/Kick
+├── better-auth/          # module, entités et accès aux comptes liés
+├── database/             # module TypeORM, entités et migrations
+├── platform-connections/ # module de synchronisation des comptes et statuts
+├── stream-profile/      # module et entité des profils de stream
+├── platform-commands/    # commandes multi-plateformes
+├── twitch/               # module EventSub, Helix et tests Twitch
+├── kick/                 # module webhook, API publique et tests Kick
+├── live-session/         # module de session chat/événements en mémoire
+├── realtime/             # gateway Socket.IO
+└── shared/               # utilitaires partagés
 ```
 
 ## Règles spécifiques

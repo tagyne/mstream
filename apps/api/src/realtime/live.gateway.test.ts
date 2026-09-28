@@ -7,7 +7,13 @@ test('LiveSession subscriptions receive normalized updates for Socket.IO gateway
   const session = new LiveSession();
   const updates: string[] = [];
   const unsubscribe = session.subscribe((update) => updates.push(update.kind));
-  const message: UnifiedMessage = { platform: 'twitch', externalId: '1', author: { name: 'a', badges: [] }, content: 'hi', createdAt: new Date().toISOString() };
+  const message: UnifiedMessage = {
+    platform: 'twitch',
+    externalId: '1',
+    author: { name: 'a', badges: [] },
+    content: 'hi',
+    createdAt: new Date().toISOString(),
+  };
   session.addMessage(message);
   session.setStatus({ platform: 'kick', state: 'connected', updatedAt: new Date().toISOString() });
   unsubscribe();
