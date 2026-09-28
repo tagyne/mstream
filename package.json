@@ -8,6 +8,16 @@
     "lint": "pnpm --filter @mstream/contracts build && pnpm --recursive lint",
     "test": "pnpm --filter @mstream/web test",
     "typecheck": "pnpm --filter @mstream/contracts build && pnpm --filter @mstream/api typecheck && pnpm --filter @mstream/web typecheck",
-    "test:e2e": "pnpm --filter @mstream/api test:e2e && pnpm --filter @mstream/web test"
+    "test:e2e": "pnpm --filter @mstream/api test:e2e && pnpm --filter @mstream/web test",
+    "format": "pnpm exec prettier --write eslint.config.mjs .prettierrc.json && pnpm --filter @mstream/api format && pnpm --filter @mstream/web format",
+    "format:check": "pnpm exec prettier --check eslint.config.mjs .prettierrc.json && pnpm --filter @mstream/api format:check && pnpm --filter @mstream/web format:check"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.9",
+    "typescript-eslint": "^8.70.1"
   }
 }
