@@ -12,6 +12,8 @@ describe('StreamSettings', () => {
     const title = screen.getByRole('textbox', { name: 'Titre' });
     const category = screen.getByRole('textbox', { name: 'Catégorie / ID' });
 
+    expect(twitch.closest('label')?.querySelector('img')).toHaveClass('platform-icon-twitch');
+    expect(kick.closest('label')?.querySelector('img')).toHaveClass('platform-icon-kick');
     expect(twitch.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(kick.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(title.closest('.settings-fields')).toContainElement(category);

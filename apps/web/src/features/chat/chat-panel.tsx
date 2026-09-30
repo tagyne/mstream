@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { UnifiedMessage } from '@mstream/contracts';
+import { PlatformIcon } from '../../components/platform-icon';
 import { Button } from '../../components/ui/button';
 
 export function ChatPanel({
@@ -48,8 +49,12 @@ export function ChatPanel({
           >
             {messages.map((message) => (
               <li key={`${message.platform}-${message.externalId}`}>
-                <span className={`platform-badge platform-${message.platform}`}>
-                  {message.platform}
+                <span
+                  className={`platform-badge platform-${message.platform}`}
+                  role="img"
+                  aria-label={message.platform}
+                >
+                  <PlatformIcon platform={message.platform} />
                 </span>
                 <strong>{message.author.name}</strong>
                 <span>{message.content}</span>

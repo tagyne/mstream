@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { PlatformIcon } from '../components/platform-icon';
 import { ActivityPanel } from '../features/activity/activity-panel';
 import { ChatPanel } from '../features/chat/chat-panel';
 import { MessageComposer } from '../features/composer/message-composer';
@@ -25,8 +26,11 @@ function AuthenticatedDashboard() {
               <span
                 key={platform}
                 className={`status ${status?.state === 'connected' ? 'status-online' : 'status-offline'}`}
+                role="img"
+                aria-label={`${platform} · ${status?.state ?? 'déconnecté'}`}
               >
-                {platform} · {status?.state ?? 'déconnecté'}
+                <PlatformIcon platform={platform} />
+                <span>{status?.state ?? 'déconnecté'}</span>
               </span>
             );
           })}

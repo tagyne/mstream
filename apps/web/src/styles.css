@@ -199,6 +199,9 @@ p {
   gap: var(--space-2);
 }
 .status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   padding: 0.4rem 0.7rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
@@ -302,8 +305,18 @@ p {
   margin-left: auto;
   white-space: nowrap;
 }
-.platform-badge,
-.event-type {
+.platform-icon {
+  display: inline-block;
+  width: 2.25rem;
+  height: 0.75rem;
+  flex: none;
+  object-fit: contain;
+  vertical-align: middle;
+}
+.platform-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   padding: 0.15rem 0.35rem;
   border-radius: var(--radius-sm);
   font-size: 0.7rem;
@@ -320,6 +333,9 @@ p {
 .platform-twitch {
   background: var(--color-twitch);
   color: #fff;
+}
+.platform-badge .platform-icon-twitch {
+  filter: brightness(0) invert(1);
 }
 .platform-kick {
   background: var(--color-kick);
@@ -449,6 +465,11 @@ input[type='radio'] {
 .composer-row input {
   flex: 1;
   min-width: 0;
+}
+.result-platform {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 .result-list li {
   display: flex;

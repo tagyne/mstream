@@ -22,8 +22,10 @@ describe('login page', () => {
     window.history.pushState({}, '', '/login');
     render(<App />);
     expect(screen.getByRole('heading', { name: 'Connexion' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Continuer avec Twitch' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Continuer avec Kick' })).toBeInTheDocument();
+    const twitchButton = screen.getByRole('button', { name: 'Continuer avec Twitch' });
+    const kickButton = screen.getByRole('button', { name: 'Continuer avec Kick' });
+    expect(twitchButton.querySelector('img')).toHaveClass('platform-icon-twitch');
+    expect(kickButton.querySelector('img')).toHaveClass('platform-icon-kick');
     expect(screen.queryByRole('textbox', { name: /email/i })).not.toBeInTheDocument();
   });
 });
@@ -37,6 +39,10 @@ describe('dashboard session guard', () => {
     render(<App />);
     expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByLabelText('État des plateformes').querySelectorAll('.platform-icon'),
+    ).toHaveLength(2);
+
     const settingsTitle = screen.getByRole('heading', { name: 'Paramètres du stream' });
     const activityTitle = screen.getByRole('heading', { name: 'Fil d’actualité' });
     const chatTitle = screen.getByRole('heading', { name: 'Chat' });

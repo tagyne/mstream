@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
+import { PlatformIcon } from '../components/platform-icon';
 import { startPlatformConnection } from '../lib/auth-client';
 
 export function LoginPage() {
@@ -28,11 +29,21 @@ export function LoginPage() {
         plateforme.
       </p>
       <div className="platform-actions">
-        <Button type="button" disabled={busy} onClick={() => void connect('twitch')}>
-          Continuer avec Twitch
+        <Button
+          type="button"
+          aria-label="Continuer avec Twitch"
+          disabled={busy}
+          onClick={() => void connect('twitch')}
+        >
+          <PlatformIcon platform="twitch" />
         </Button>
-        <Button type="button" disabled={busy} onClick={() => void connect('kick')}>
-          Continuer avec Kick
+        <Button
+          type="button"
+          aria-label="Continuer avec Kick"
+          disabled={busy}
+          onClick={() => void connect('kick')}
+        >
+          <PlatformIcon platform="kick" />
         </Button>
       </div>
       {message && (

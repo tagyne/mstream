@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { OutboundMessageResult, Platform, PlatformStatus } from '@mstream/contracts';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
+import { PlatformIcon } from '../../components/platform-icon';
 import { Button } from '../../components/ui/button';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Input } from '../../components/ui/input';
@@ -64,6 +65,7 @@ export function MessageComposer({ statuses }: { statuses: PlatformStatus[] }) {
         {(['twitch', 'kick'] as const).map((platform) => (
           <label key={platform}>
             <Checkbox
+              aria-label={platform}
               checked={formik.values.destinations.includes(platform)}
               disabled={!connected.includes(platform) || formik.isSubmitting}
               onCheckedChange={(checked) => {
@@ -73,8 +75,8 @@ export function MessageComposer({ statuses }: { statuses: PlatformStatus[] }) {
                 void formik.setFieldValue('destinations', destinations);
                 void formik.setFieldTouched('destinations', true, false);
               }}
-            />{' '}
-            {platform}
+            />
+            <PlatformIcon platform={platform} />
           </label>
         ))}
       </div>
@@ -118,7 +120,9 @@ export function MessageComposer({ statuses }: { statuses: PlatformStatus[] }) {
         <ul className="result-list" aria-live="polite">
           {results.map((result) => (
             <li key={result.platform}>
-              <span>{result.platform}</span>
+              <span className="result-platform" role="img" aria-label={result.platform}>
+                <PlatformIcon platform={result.platform} />
+              </span>
               <strong>{result.status}</strong>
               {result.message && <small>{result.message}</small>}
             </li>

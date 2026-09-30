@@ -17,7 +17,9 @@ describe('ChatPanel', () => {
         ]}
       />,
     );
-    expect(screen.getByText('kick')).toBeInTheDocument();
+    const platform = screen.getByLabelText('kick');
+    expect(platform).toBeInTheDocument();
+    expect(platform.querySelector('img')).toHaveClass('platform-icon-kick');
     expect(screen.getByText('viewer')).toBeInTheDocument();
     expect(screen.getByText('Bonjour')).toBeInTheDocument();
   });
