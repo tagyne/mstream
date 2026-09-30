@@ -10,14 +10,14 @@ Le succès du MVP est atteint lorsque le streamer peut suivre les messages impor
 
 ## 2. Capability map
 
-| Module | Responsabilité | Dépend de |
-|---|---|---|
-| `workspace` | Monorepo pnpm, applications, configuration locale | — |
-| `identity` | Session applicative et liaison OAuth Twitch/Kick | `workspace` |
-| `platform-adapters` | Clients Twitch/Kick, tokens, appels API et événements entrants | `identity` |
-| `realtime-contract` | Modèles normalisés et diffusion Socket.IO | `platform-adapters` |
-| `live-session` | Session de live en mémoire, chat, fil d’actualité et états de connexion | `realtime-contract` |
-| `dashboard-ui` | Interface React, chat, fil, composeur et panneau stream | `identity`, `live-session` |
+| Module              | Responsabilité                                                          | Dépend de                  |
+| ------------------- | ----------------------------------------------------------------------- | -------------------------- |
+| `workspace`         | Monorepo pnpm, applications, configuration locale                       | —                          |
+| `identity`          | Session applicative et liaison OAuth Twitch/Kick                        | `workspace`                |
+| `platform-adapters` | Clients Twitch/Kick, tokens, appels API et événements entrants          | `identity`                 |
+| `realtime-contract` | Modèles normalisés et diffusion Socket.IO                               | `platform-adapters`        |
+| `live-session`      | Session de live en mémoire, chat, fil d’actualité et états de connexion | `realtime-contract`        |
+| `dashboard-ui`      | Interface React, chat, fil, composeur et panneau stream                 | `identity`, `live-session` |
 
 Ordre recommandé : `workspace` → `identity` → `platform-adapters` → `realtime-contract` → `live-session` → `dashboard-ui`.
 
@@ -33,7 +33,7 @@ Ordre recommandé : `workspace` → `identity` → `platform-adapters` → `real
 - Sélection/désélection explicite des plateformes avant l’envoi.
 - Résultat d’envoi par plateforme : succès, refus, limite, token expiré ou erreur réseau.
 - Bouton/compteur « nouveaux messages » lorsque le streamer a remonté le chat.
-- Mise à jour du titre et de la catégorie du stream, avec résultat par plateforme.
+- Lecture du titre et de la catégorie actuels depuis chaque plateforme liée, puis mise à jour avec un résultat par plateforme.
 - Fil d’actualité conservé uniquement en mémoire pendant la session.
 - Pages statiques pré-générées : accueil, connexion et aide.
 - Dashboard rendu côté client pour les données OAuth et temps réel.
@@ -324,4 +324,3 @@ docker compose -f compose.prod.yaml down
 - [ ] Image de service retenue pour servir le build SSG du frontend en production locale.
 - [ ] Framework de tests API à retenir, distinct de Vitest.
 - [ ] Framework E2E navigateur à retenir en complément de Vitest web.
-
