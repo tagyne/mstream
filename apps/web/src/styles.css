@@ -106,6 +106,12 @@ p {
   margin-inline: auto;
   padding-block: var(--space-12);
 }
+.dashboard {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  padding-block: var(--space-6);
+}
 .page {
   min-height: 100vh;
   display: grid;
@@ -183,9 +189,9 @@ p {
   gap: var(--space-8);
 }
 .dashboard-header h1 {
-  margin: var(--space-2) 0 0;
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
-  letter-spacing: -0.045em;
+  margin: var(--space-1) 0 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  letter-spacing: -0.025em;
 }
 .status-list {
   display: flex;
@@ -206,11 +212,50 @@ p {
   border-color: var(--color-kick);
   color: var(--color-success);
 }
-.dashboard-grid {
+.dashboard-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-4);
-  margin-top: var(--space-12);
+  min-height: 40rem;
+  margin-top: var(--space-4);
+}
+.dashboard-sidebar {
+  display: grid;
+  grid-template-rows: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: var(--space-4);
+  min-height: 0;
+}
+.dashboard-sidebar > .panel,
+.dashboard-sidebar > .composer {
+  min-height: 0;
+  margin-top: 0;
+  overflow: auto;
+}
+.dashboard-layout > .chat-panel {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+.chat-message-area {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+.chat-message-area .message-list {
+  min-height: 0;
+  flex: 1;
+  max-height: none;
+  overflow-y: auto;
+}
+.chat-footer {
+  flex: none;
+  padding-top: var(--space-4);
+}
+.chat-footer .composer {
+  margin-top: 0;
 }
 .panel-heading {
   display: flex;
@@ -258,6 +303,13 @@ p {
   white-space: nowrap;
 }
 .platform-badge,
+.event-type {
+  padding: 0.15rem 0.35rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
 .event-type {
   padding: 0.15rem 0.35rem;
   border-radius: var(--radius-sm);
@@ -411,7 +463,7 @@ input[type='radio'] {
 }
 .settings-fields {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
 }
 .settings-fields label,
@@ -443,17 +495,32 @@ input[type='radio'] {
   border: 0;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 840px) {
+  .dashboard {
+    min-height: 100dvh;
+  }
   .dashboard-header,
-  .dashboard-grid {
+  .dashboard-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
   }
   .dashboard-header {
     align-items: start;
   }
-  .dashboard-grid {
-    margin-top: var(--space-8);
+  .dashboard-layout {
+    flex: none;
+    min-height: 0;
+    margin-top: var(--space-6);
+  }
+  .dashboard-sidebar {
+    grid-template-rows: auto auto;
+  }
+  .dashboard-sidebar > .panel,
+  .dashboard-sidebar > .composer {
+    min-height: 22rem;
+  }
+  .dashboard-layout > .chat-panel {
+    min-height: 40rem;
   }
 }
 

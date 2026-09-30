@@ -32,12 +32,16 @@ function AuthenticatedDashboard() {
           })}
         </div>
       </header>
-      <section className="dashboard-grid">
-        <ChatPanel messages={snapshot.messages} />
-        <ActivityPanel events={snapshot.events} />
-      </section>
-      <MessageComposer statuses={snapshot.statuses} />
-      <StreamSettings statuses={snapshot.statuses} />
+      <div className="dashboard-layout">
+        <aside className="dashboard-sidebar" aria-label="Paramètres et actualité">
+          <StreamSettings statuses={snapshot.statuses} />
+          <ActivityPanel events={snapshot.events} />
+        </aside>
+        <ChatPanel
+          messages={snapshot.messages}
+          footer={<MessageComposer statuses={snapshot.statuses} />}
+        />
+      </div>
     </main>
   );
 }

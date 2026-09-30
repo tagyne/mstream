@@ -37,6 +37,21 @@ describe('dashboard session guard', () => {
     render(<App />);
     expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
+    const settingsTitle = screen.getByRole('heading', { name: 'Paramètres du stream' });
+    const activityTitle = screen.getByRole('heading', { name: 'Fil d’actualité' });
+    const chatTitle = screen.getByRole('heading', { name: 'Chat' });
+    const replyTitle = screen.getByRole('heading', { name: 'Répondre' });
+    const sidebar = settingsTitle.closest('.dashboard-sidebar');
+
+    expect(sidebar).toContainElement(activityTitle);
+    expect(sidebar).not.toContainElement(chatTitle);
+    expect(
+      settingsTitle.compareDocumentPosition(activityTitle) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      activityTitle.compareDocumentPosition(chatTitle) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(replyTitle.closest('.chat-panel')).toContainElement(chatTitle);
   });
 
   it('redirects to login when the API has no session in production', async () => {

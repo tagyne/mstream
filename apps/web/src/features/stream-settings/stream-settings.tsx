@@ -68,6 +68,25 @@ export function StreamSettings({ statuses }: { statuses: PlatformStatus[] }) {
       aria-labelledby="stream-settings-title"
     >
       <h2 id="stream-settings-title">Paramètres du stream</h2>
+      <div className="recipient-list">
+        {(['twitch', 'kick'] as const).map((platform) => (
+          <label key={platform}>
+            <Checkbox
+              checked={formik.values.destinations.includes(platform)}
+              disabled={!connected.includes(platform) || formik.isSubmitting}
+              onCheckedChange={(checked) => {
+                const destinations = checked
+                  ? [...formik.values.destinations, platform]
+                  : formik.values.destinations.filter((value) => value !== platform);
+                void formik.setFieldValue('destinations', destinations);
+                void formik.setFieldTouched('destinations', true, false);
+              }}
+            />
+            {' '}
+            {platform}
+          </label>
+        ))}
+      </div>
       <div className="settings-fields">
         <label>
           Titre
@@ -102,24 +121,6 @@ export function StreamSettings({ statuses }: { statuses: PlatformStatus[] }) {
             </span>
           )}
         </label>
-      </div>
-      <div className="recipient-list">
-        {(['twitch', 'kick'] as const).map((platform) => (
-          <label key={platform}>
-            <Checkbox
-              checked={formik.values.destinations.includes(platform)}
-              disabled={!connected.includes(platform) || formik.isSubmitting}
-              onCheckedChange={(checked) => {
-                const destinations = checked
-                  ? [...formik.values.destinations, platform]
-                  : formik.values.destinations.filter((value) => value !== platform);
-                void formik.setFieldValue('destinations', destinations);
-                void formik.setFieldTouched('destinations', true, false);
-              }}
-            />{' '}
-            {platform}
-          </label>
-        ))}
       </div>
       {typeof destinationsError === 'string' && (
         <p className="form-message" role="alert">
