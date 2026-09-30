@@ -39,6 +39,15 @@ export type StreamMetadataResult = {
   title?: string;
   categoryId?: string;
   categoryName?: string;
+  categoryImageUrl?: string;
+  message?: string;
+};
+
+export type StreamCategory = { id: string; name: string; imageUrl: string };
+
+export type StreamCategorySearchResult = {
+  platform: Platform;
+  categories: StreamCategory[];
   message?: string;
 };
 
