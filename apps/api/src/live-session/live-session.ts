@@ -1,8 +1,4 @@
-import type {
-  PlatformStatus,
-  UnifiedEvent,
-  UnifiedMessage,
-} from '@mstream/contracts';
+import type { PlatformStatus, UnifiedEvent, UnifiedMessage } from '@mstream/contracts';
 
 export type LiveSessionUpdate =
   | { kind: 'message'; value: UnifiedMessage }

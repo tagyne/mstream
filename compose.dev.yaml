@@ -20,7 +20,7 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     command: pnpm --filter @mstream/api dev
-    env_file: .env.dev
+    env_file: apps/api/.env.dev
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-mstream}:${POSTGRES_PASSWORD:-change-me-dev}@postgres:5432/${POSTGRES_DB:-mstream_dev}
     ports:
@@ -36,6 +36,8 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     command: pnpm --filter @mstream/web dev --host 0.0.0.0
+    environment:
+      API_PROXY_TARGET: http://api:3000
     ports:
       - "${WEB_PORT:-5173}:5173"
     volumes:

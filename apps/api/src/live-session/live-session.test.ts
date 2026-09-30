@@ -12,17 +12,17 @@ const message: UnifiedMessage = {
 };
 
 test('deduplicates messages by platform and external id', () => {
-    const session = new LiveSession();
+  const session = new LiveSession();
 
-    assert.equal(session.addMessage(message), true);
-    assert.equal(session.addMessage(message), false);
-    assert.deepEqual(session.snapshot().messages, [message]);
+  assert.equal(session.addMessage(message), true);
+  assert.equal(session.addMessage(message), false);
+  assert.deepEqual(session.snapshot().messages, [message]);
 });
 
 test('clears all in-memory data when the session ends', () => {
-    const session = new LiveSession();
-    session.addMessage(message);
-    session.clear();
+  const session = new LiveSession();
+  session.addMessage(message);
+  session.clear();
 
   assert.deepEqual(session.snapshot(), { messages: [], events: [], statuses: [] });
 });

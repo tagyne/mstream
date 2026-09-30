@@ -44,6 +44,8 @@ Twitch utilise EventSub WebSocket. Kick utilise Events API/Webhooks via un Cloud
 - Normaliser les payloads externes avant de les envoyer au frontend.
 - Valider les entrées et typer les contrats.
 - Exécuter les tests ciblés, le typecheck et le build affecté avant de conclure.
+- Utiliser la configuration Prettier et ESLint commune à la racine pour `apps/api` et `apps/web` ; ne pas ajouter de règles locales divergentes.
+- Formater avec `pnpm format` et vérifier avec `pnpm format:check` avant de conclure.
 - Mettre à jour la spec ou le plan si une décision d’architecture change.
 - Utiliser uniquement les APIs officielles documentées.
 
@@ -88,6 +90,8 @@ pnpm test
 pnpm test:e2e
 pnpm lint
 pnpm typecheck
+pnpm format
+pnpm format:check
 ```
 
 Docker doit être validé avec :
