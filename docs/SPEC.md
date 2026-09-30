@@ -34,6 +34,7 @@ Ordre recommandé : `workspace` → `identity` → `platform-adapters` → `real
 - Résultat d’envoi par plateforme : succès, refus, limite, token expiré ou erreur réseau.
 - Bouton/compteur « nouveaux messages » lorsque le streamer a remonté le chat.
 - Lecture du titre et de la catégorie actuels depuis chaque plateforme liée, puis mise à jour avec un résultat par plateforme.
+- Recherche de catégories officielles selon la plateforme sélectionnée, avec suggestions et sélection affichant le nom et l’image de catégorie.
 - Fil d’actualité conservé uniquement en mémoire pendant la session.
 - Pages statiques pré-générées : accueil, connexion et aide.
 - Dashboard rendu côté client pour les données OAuth et temps réel.
@@ -211,6 +212,10 @@ Socket.IO
 Chat ou fil d’actualité React
 ```
 
+### Recherche de catégorie
+
+Le dashboard appelle `GET /commands/categories?platform=twitch|kick&query=...` avec sa session. L’API recherche côté serveur via Twitch Helix Search Categories ou Kick Categories V2, normalise les résultats en `{ id, name, imageUrl }` et ne transmet jamais de jeton au navigateur. Le champ conserve l’identifiant propre à la plateforme et présente l’image ainsi que le nom dans les suggestions et après sélection. La recherche démarre à partir de trois caractères et les réponses obsolètes ne remplacent pas les résultats de la saisie courante.
+
 ### Envoi multi-plateforme
 
 Le frontend envoie le contenu et la liste des destinataires. L’API exécute une opération indépendante par plateforme connectée et renvoie un tableau de résultats. Un échec Kick ne doit pas annuler un envoi Twitch réussi.
@@ -240,6 +245,7 @@ Le formulaire envoie les changements souhaités par plateforme. L’API traduit 
 - Webhook : signature Kick valide/invalide, replay, réponse rapide et événements inconnus avec fixtures locales.
 - Temps réel : EventSub Twitch, reconnexion, resouscription et publication Socket.IO.
 - E2E : connexion Twitch/Kick, chat entrant, fil d’événements, envoi ciblé/multiple et mise à jour du titre.
+- Catégories : normalisation des réponses officielles, validation de la route authentifiée, sélection image/nom, états de recherche, navigation clavier et conservation des IDs par plateforme.
 
 ### Critères de réussite
 
@@ -251,6 +257,7 @@ Le formulaire envoie les changements souhaités par plateforme. L’API traduit 
 - Un refresh token permet de maintenir la connexion sans intervention pendant un live.
 - Les webhooks Kick invalides ou dupliqués ne modifient pas la session.
 - Aucun secret de plateforme n’est présent dans le bundle web ou les logs.
+- Les catégories sont recherchées via les APIs officielles et le formulaire affiche leur image et leur nom avant et après sélection.
 - Après la validation du MVP local, le tunnel Cloudflare nommé démarre avec l’environnement prévu et l’URL reste stable.
 
 ## 11. Commandes proposées
