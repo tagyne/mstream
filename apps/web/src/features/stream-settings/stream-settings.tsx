@@ -3,21 +3,30 @@ import type {
   OutboundMessageResult,
   Platform,
   PlatformStatus,
+  StreamCategorySearchResult,
   StreamMetadataResult,
 } from '@mstream/contracts';
 import { useFormik, type FormikErrors } from 'formik';
 import * as yup from 'yup';
 import { PlatformIcon } from '../../components/platform-icon';
+import { Autocomplete, type AutocompleteOption } from '../../components/ui/autocomplete';
 import { Button } from '../../components/ui/button';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Input } from '../../components/ui/input';
 
-type StreamDraft = { title: string; categoryId: string };
+type StreamDraft = {
+  title: string;
+  categoryId: string;
+  categoryName: string;
+  categoryImageUrl: string;
+};
 type StreamValues = { destinations: Platform[]; twitch: StreamDraft; kick: StreamDraft };
 
 const draftSchema = yup.object({
   title: yup.string().trim().max(140, 'Le titre est trop long.'),
   categoryId: yup.string().trim(),
+  categoryName: yup.string(),
+  categoryImageUrl: yup.string(),
 });
 const validationSchema = yup.object({
   destinations: yup
@@ -41,6 +50,9 @@ export function StreamSettings({ statuses }: { statuses: PlatformStatus[] }) {
   );
   const connectedKey = connected.join(',');
   const [selected, setSelected] = useState<Platform>('twitch');
+  const [categoryQuery, setCategoryQuery] = useState('');
+  const [categorySearch, setCategorySearch] = useState<StreamCategorySearchResult | null>(null);
+  const [categoryLoading, setCategoryLoading] = useState(false);
   const [results, setResults] = useState<OutboundMessageResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -48,8 +60,8 @@ export function StreamSettings({ statuses }: { statuses: PlatformStatus[] }) {
   const formik = useFormik<StreamValues>({
     initialValues: {
       destinations: connected,
-      twitch: { title: '', categoryId: '' },
-      kick: { title: '', categoryId: '' },
+      twitch: { title: '', categoryId: '', categoryName: '', categoryImageUrl: '' },
+      kick: { title: '', categoryId: '', categoryName: '', categoryImageUrl: '' },
     },
     validationSchema,
     validate: (values) => {
@@ -116,6 +128,12 @@ export function StreamSettings({ statuses }: { statuses: PlatformStatus[] }) {
               categoryId: edited.current.has(`${item.platform}.categoryId`)
                 ? current[item.platform].categoryId
                 : (item.categoryId ?? ''),
+              categoryName: edited.current.has(`${item.platform}.categoryId`)
+                ? current[item.platform].categoryName
+                : (item.categoryName ?? ''),
+              categoryImageUrl: edited.current.has(`${item.platform}.categoryId`)
+                ? current[item.platform].categoryImageUrl
+                : (item.categoryImageUrl ?? ''),
             };
           }
           return next;
@@ -132,11 +150,70 @@ export function StreamSettings({ statuses }: { statuses: PlatformStatus[] }) {
     };
   }, []);
 
+  useEffect(() => {
+    setCategoryQuery('');
+    setCategorySearch(null);
+  }, [selected]);
+
+  useEffect(() => {
+    const query = categoryQuery.trim();
+    if (query.length < 3 || !connected.includes(selected)) {
+      setCategoryLoading(false);
+      setCategorySearch(null);
+      return;
+    }
+
+    setCategorySearch(null);
+    setCategoryLoading(false);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => {
+      setCategoryLoading(true);
+      const params = new URLSearchParams({ platform: selected, query });
+      void fetch(`/commands/categories?${params}`, {
+        credentials: 'include',
+        signal: controller.signal,
+      })
+        .then(async (response) => {
+          if (!response.ok) throw new Error('Category search failed');
+          return (await response.json()) as StreamCategorySearchResult;
+        })
+        .then((result) => {
+          if (!controller.signal.aborted) setCategorySearch(result);
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) {
+            setCategorySearch({
+              platform: selected,
+              categories: [],
+              message: `La recherche de catégories ${selected === 'twitch' ? 'Twitch' : 'Kick'} a échoué.`,
+            });
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setCategoryLoading(false);
+        });
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [categoryQuery, connectedKey, selected]);
+
   const selectedDraft = formik.values[selected];
   const titleError = formik.touched[selected]?.title && formik.errors[selected]?.title;
   const categoryError = formik.touched[selected]?.categoryId && formik.errors[selected]?.categoryId;
+  const categoryOptions: AutocompleteOption[] = (categorySearch?.categories ?? []).map(
+    (category) => ({ value: category.id, label: category.name, imageUrl: category.imageUrl }),
+  );
+  const selectedCategory = selectedDraft.categoryId
+    ? {
+        value: selectedDraft.categoryId,
+        label: selectedDraft.categoryName,
+        imageUrl: selectedDraft.categoryImageUrl,
+      }
+    : null;
   const destinationsError = formik.touched.destinations && formik.errors.destinations;
-  const selectedMetadata = metadata.find((item) => item.platform === selected);
   const canSubmit = formik.values.destinations.every((platform) => {
     const draft = formik.values[platform];
     return Boolean(draft.title.trim() || draft.categoryId.trim());
@@ -209,31 +286,56 @@ export function StreamSettings({ statuses }: { statuses: PlatformStatus[] }) {
             </span>
           )}
         </label>
-        <label>
-          Catégorie / ID
-          <Input
-            name={`${selected}.categoryId`}
-            value={selectedDraft.categoryId}
-            onChange={(event) => {
-              edited.current.add(`${selected}.categoryId`);
-              formik.handleChange(event);
+        <div className="stream-category-field">
+          <Autocomplete
+            label="Catégorie"
+            value={selectedDraft.categoryId || null}
+            inputValue={categoryQuery || selectedDraft.categoryName}
+            options={categoryOptions}
+            onBlur={() => {
+              void formik.setFieldTouched(`${selected}.categoryId`, true, false);
             }}
-            onBlur={formik.handleBlur}
-            aria-invalid={Boolean(categoryError)}
-            aria-describedby={categoryError ? 'category-error' : undefined}
+            onInputValueChange={(query) => {
+              setCategoryQuery(query);
+              if (query !== selectedDraft.categoryName || selectedDraft.categoryId) {
+                edited.current.add(`${selected}.categoryId`);
+                void formik.setFieldValue(`${selected}.categoryId`, '');
+                void formik.setFieldValue(`${selected}.categoryName`, query);
+                void formik.setFieldValue(`${selected}.categoryImageUrl`, '');
+              }
+            }}
+            onValueChange={(option) => {
+              if (!option) return;
+              edited.current.add(`${selected}.categoryId`);
+              setCategoryQuery('');
+              void formik.setFieldValue(`${selected}.categoryId`, option.value);
+              void formik.setFieldValue(`${selected}.categoryName`, option.label);
+              void formik.setFieldValue(`${selected}.categoryImageUrl`, option.imageUrl ?? '');
+            }}
+            loading={categoryLoading}
+            error={categorySearch?.message}
+            emptyMessage="Aucune catégorie trouvée."
+            placeholder="Rechercher une catégorie (3 caractères min.)…"
+            disabled={!connected.includes(selected)}
+            invalid={Boolean(categoryError)}
+            describedBy={categoryError ? 'category-error' : undefined}
           />
+          {selectedCategory && (
+            <div
+              className="autocomplete-selection"
+              aria-label={`Catégorie sélectionnée : ${selectedCategory.label}`}
+            >
+              {selectedCategory.imageUrl && <img src={selectedCategory.imageUrl} alt="" />}
+              <span>{selectedCategory.label}</span>
+            </div>
+          )}
           {categoryError && (
             <span id="category-error" className="form-message" role="alert">
               {categoryError}
             </span>
           )}
-        </label>
+        </div>
       </div>
-      {selectedMetadata?.status === 'success' && selectedMetadata.categoryName && (
-        <p>
-          Catégorie actuelle : <strong>{selectedMetadata.categoryName}</strong>
-        </p>
-      )}
       {typeof destinationsError === 'string' && (
         <p className="form-message" role="alert">
           {destinationsError}
