@@ -23,8 +23,12 @@ describe('MessageComposer', () => {
         ]}
       />,
     );
-    expect(screen.getByRole('checkbox', { name: /twitch/i })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: /kick/i })).toBeChecked();
+    const twitch = screen.getByRole('checkbox', { name: /twitch/i });
+    const kick = screen.getByRole('checkbox', { name: /kick/i });
+    expect(twitch).toBeChecked();
+    expect(kick).toBeChecked();
+    expect(twitch.closest('label')?.querySelector('img')).toHaveClass('platform-icon-twitch');
+    expect(kick.closest('label')?.querySelector('img')).toHaveClass('platform-icon-kick');
     await user.click(screen.getByRole('checkbox', { name: /kick/i }));
     expect(screen.getByRole('checkbox', { name: /kick/i })).not.toBeChecked();
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Hello');
@@ -36,7 +40,8 @@ describe('MessageComposer', () => {
         body: JSON.stringify({ message: 'Hello', destinations: ['twitch'] }),
       }),
     );
-    expect(await screen.findByText('Kick indisponible')).toBeInTheDocument();
+    const result = await screen.findByText('Kick indisponible');
+    expect(result.closest('li')?.querySelector('img')).toHaveClass('platform-icon-kick');
     fetchMock.mockRestore();
   });
 

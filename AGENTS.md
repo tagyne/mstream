@@ -4,7 +4,7 @@
 
 `mstream` est un dashboard local de multistreaming pour un streamer solo. Le MVP centralise Twitch et Kick : chat, événements, envoi de messages et mise à jour du titre/catégorie. L’application ne produit ni ne diffuse le rendu vidéo ; OBS ou un autre outil conserve cette responsabilité.
 
-La source de vérité fonctionnelle est [docs/SPEC.md](docs/SPEC.md). Le travail est découpé dans [tasks/plan.md](tasks/plan.md) et [tasks/todo.md](tasks/todo.md).
+La source de vérité fonctionnelle est [docs/SPEC.md](docs/SPEC.md).
 
 ## Architecture
 
@@ -39,6 +39,7 @@ Twitch utilise EventSub WebSocket. Kick utilise Events API/Webhooks via un Cloud
 ### Toujours
 
 - Lire la spec et le package concerné avant de modifier du code.
+- Ne jamais utiliser le dossier `tasks/` ni les fichiers `todo.md` et `plan.md` : ne pas les lire, les modifier, les créer ou s’y référer pour organiser le travail.
 - Utiliser pnpm workspace et les scripts root ; ne pas introduire npm/yarn.
 - Garder les APIs Twitch/Kick derrière les adapters NestJS.
 - Normaliser les payloads externes avant de les envoyer au frontend.
@@ -46,7 +47,7 @@ Twitch utilise EventSub WebSocket. Kick utilise Events API/Webhooks via un Cloud
 - Exécuter les tests ciblés, le typecheck et le build affecté avant de conclure.
 - Utiliser la configuration Prettier et ESLint commune à la racine pour `apps/api` et `apps/web` ; ne pas ajouter de règles locales divergentes.
 - Formater avec `pnpm format` et vérifier avec `pnpm format:check` avant de conclure.
-- Mettre à jour la spec ou le plan si une décision d’architecture change.
+- Mettre à jour la spec si une décision d’architecture change.
 - Utiliser uniquement les APIs officielles documentées.
 
 ### Sécurité obligatoire
@@ -64,7 +65,7 @@ Twitch utilise EventSub WebSocket. Kick utilise Events API/Webhooks via un Cloud
 
 - Pas de rendu vidéo, OBS, analytics, historique permanent ou YouTube dans le MVP.
 - Pas de scraping ni d’endpoint privé.
-- Pas de nouvelle dépendance, migration DB, changement Compose ou route publique sans l’ajouter au plan et le signaler.
+- Signaler toute nouvelle dépendance, migration DB, modification de Compose ou route publique, et documenter la décision dans la spec.
 - Ne jamais supprimer/affaiblir un test pour obtenir un build vert.
 
 ## Style et conventions

@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import type { OutboundMessageResult, Platform } from '@mstream/contracts';
+import type {
+  OutboundMessageResult,
+  Platform,
+  StreamCategorySearchResult,
+  StreamMetadataResult,
+} from '@mstream/contracts';
 import { PlatformAccountTokenService } from '../better-auth/platform-account-token.service';
 import { KickPublicApiClient } from '../kick/kick-public-api.client';
 import { TwitchHelixClient } from '../twitch/twitch-helix.client';
@@ -48,6 +53,98 @@ export class PlatformCommandService {
         }
       }),
     );
+  }
+
+  async getStreamForUser(userId: string): Promise<StreamMetadataResult[]> {
+    return Promise.all(
+      (['twitch', 'kick'] as const).map(async (platform) => {
+        try {
+          const account = await this.accounts.getForUser(userId, platform);
+          if (!account)
+            return {
+              platform,
+              status: 'rejected' as const,
+              message: `${platform} is not connected`,
+            };
+          if (platform === 'kick') {
+            const stream = await this.kick.getStream(account.accessToken);
+            if (
+              stream.status !== 'success' ||
+              stream.categoryImageUrl ||
+              !stream.categoryId ||
+              !stream.categoryName
+            )
+              return stream;
+            try {
+              const categories = await this.kick.searchCategories(
+                account.accessToken,
+                stream.categoryName,
+              );
+              const category = categories.find((item) => item.id === stream.categoryId);
+              return category ? { ...stream, categoryImageUrl: category.imageUrl } : stream;
+            } catch {
+              return stream;
+            }
+          }
+          const clientId = process.env.TWITCH_CLIENT_ID ?? '';
+          const stream = await this.twitch.getStream({
+            accessToken: account.accessToken,
+            clientId,
+            broadcasterId: account.externalId,
+          });
+          if (stream.status !== 'success' || !stream.categoryId || !stream.categoryName)
+            return stream;
+          try {
+            const categories = await this.twitch.searchCategories({
+              accessToken: account.accessToken,
+              clientId,
+              query: stream.categoryName,
+            });
+            const category = categories.find((item) => item.id === stream.categoryId);
+            return category ? { ...stream, categoryImageUrl: category.imageUrl } : stream;
+          } catch {
+            return stream;
+          }
+        } catch {
+          return {
+            platform,
+            status: 'rejected' as const,
+            message: `${platform} connection could not be used`,
+          };
+        }
+      }),
+    );
+  }
+
+  async searchCategoriesForUser(
+    userId: string,
+    platform: Platform,
+    query: string,
+  ): Promise<StreamCategorySearchResult> {
+    try {
+      const account = await this.accounts.getForUser(userId, platform);
+      if (!account) {
+        const platformName = platform === 'twitch' ? 'Twitch' : 'Kick';
+        return { platform, categories: [], message: `${platformName} n’est pas connectée.` };
+      }
+      const normalizedQuery = query.trim();
+      const categories =
+        platform === 'twitch'
+          ? await this.twitch.searchCategories({
+              accessToken: account.accessToken,
+              clientId: process.env.TWITCH_CLIENT_ID ?? '',
+              query: normalizedQuery,
+            })
+          : await this.kick.searchCategories(account.accessToken, normalizedQuery);
+      return { platform, categories };
+    } catch {
+      const platformName = platform === 'twitch' ? 'Twitch' : 'Kick';
+      return {
+        platform,
+        categories: [],
+        message: `La recherche de catégories ${platformName} a échoué.`,
+      };
+    }
   }
 
   async updateStreamForUser(

@@ -122,3 +122,36 @@ test('Subscription manager recreates every configured subscription on welcome', 
   manager.stop();
   client.close();
 });
+
+test('Subscription failures identify rejected types without terminating the welcome handler', async () => {
+  const sockets: FakeSocket[] = [];
+  const session = new LiveSession();
+  const client = new TwitchEventSubClient(session, undefined, (() => {
+    const socket = new FakeSocket();
+    sockets.push(socket);
+    return socket;
+  }) as never);
+  const manager = new TwitchEventSubSubscriptionManager(
+    client,
+    'token',
+    'client',
+    [
+      { type: 'channel.chat.message', version: '1', condition: { broadcaster_user_id: '1' } },
+      { type: 'channel.subscription.gift', version: '1', condition: { broadcaster_user_id: '1' } },
+    ],
+    async (_url, init) => {
+      const body = JSON.parse(String(init?.body)) as { type: string };
+      return new Response(null, {
+        status: body.type === 'channel.subscription.gift' ? 403 : 202,
+      });
+    },
+  );
+  await assert.rejects(manager.resubscribe('session'), /channel\.subscription\.gift: HTTP 403/);
+  manager.start();
+  client.connect();
+  sockets[0].message(welcome('session', 'welcome-error'));
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(session.snapshot().statuses[0]?.state, 'connected');
+  manager.stop();
+  client.close();
+});

@@ -1,4 +1,5 @@
 import type { UnifiedEvent } from '@mstream/contracts';
+import { PlatformIcon } from '../../components/platform-icon';
 
 export function ActivityPanel({ events }: { events: UnifiedEvent[] }) {
   return (
@@ -13,7 +14,13 @@ export function ActivityPanel({ events }: { events: UnifiedEvent[] }) {
         <ol className="event-list">
           {events.map((event) => (
             <li key={`${event.platform}-${event.externalId}`}>
-              <span className={`platform-badge platform-${event.platform}`}>{event.platform}</span>
+              <span
+                className={`platform-badge platform-${event.platform}`}
+                role="img"
+                aria-label={event.platform}
+              >
+                <PlatformIcon platform={event.platform} />
+              </span>
               <strong className={`event-type event-${event.type}`}>{event.type}</strong>
               <span>{event.actor ?? 'Plateforme'}</span>
             </li>

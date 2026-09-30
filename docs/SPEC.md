@@ -10,14 +10,14 @@ Le succès du MVP est atteint lorsque le streamer peut suivre les messages impor
 
 ## 2. Capability map
 
-| Module | Responsabilité | Dépend de |
-|---|---|---|
-| `workspace` | Monorepo pnpm, applications, configuration locale | — |
-| `identity` | Session applicative et liaison OAuth Twitch/Kick | `workspace` |
-| `platform-adapters` | Clients Twitch/Kick, tokens, appels API et événements entrants | `identity` |
-| `realtime-contract` | Modèles normalisés et diffusion Socket.IO | `platform-adapters` |
-| `live-session` | Session de live en mémoire, chat, fil d’actualité et états de connexion | `realtime-contract` |
-| `dashboard-ui` | Interface React, chat, fil, composeur et panneau stream | `identity`, `live-session` |
+| Module              | Responsabilité                                                          | Dépend de                  |
+| ------------------- | ----------------------------------------------------------------------- | -------------------------- |
+| `workspace`         | Monorepo pnpm, applications, configuration locale                       | —                          |
+| `identity`          | Session applicative et liaison OAuth Twitch/Kick                        | `workspace`                |
+| `platform-adapters` | Clients Twitch/Kick, tokens, appels API et événements entrants          | `identity`                 |
+| `realtime-contract` | Modèles normalisés et diffusion Socket.IO                               | `platform-adapters`        |
+| `live-session`      | Session de live en mémoire, chat, fil d’actualité et états de connexion | `realtime-contract`        |
+| `dashboard-ui`      | Interface React, chat, fil, composeur et panneau stream                 | `identity`, `live-session` |
 
 Ordre recommandé : `workspace` → `identity` → `platform-adapters` → `realtime-contract` → `live-session` → `dashboard-ui`.
 
@@ -33,7 +33,8 @@ Ordre recommandé : `workspace` → `identity` → `platform-adapters` → `real
 - Sélection/désélection explicite des plateformes avant l’envoi.
 - Résultat d’envoi par plateforme : succès, refus, limite, token expiré ou erreur réseau.
 - Bouton/compteur « nouveaux messages » lorsque le streamer a remonté le chat.
-- Mise à jour du titre et de la catégorie du stream, avec résultat par plateforme.
+- Lecture du titre et de la catégorie actuels depuis chaque plateforme liée, puis mise à jour avec un résultat par plateforme.
+- Recherche de catégories officielles selon la plateforme sélectionnée, avec suggestions et sélection affichant le nom et l’image de catégorie.
 - Fil d’actualité conservé uniquement en mémoire pendant la session.
 - Pages statiques pré-générées : accueil, connexion et aide.
 - Dashboard rendu côté client pour les données OAuth et temps réel.
@@ -103,7 +104,7 @@ Le frontend ne contacte jamais directement Twitch ou Kick. Les tokens et secrets
 
 Le backend utilise OAuth 2.0 Authorization Code pour obtenir un token utilisateur. EventSub WebSocket reçoit notamment `channel.chat.message`, `channel.chat.notification`, `channel.follow`, `channel.subscribe`, `channel.subscription.gift`, `channel.cheer` et `channel.update`. La connexion doit traiter le message de bienvenue, les keepalive, les reconnexions et les doublons.
 
-L’envoi utilise `POST https://api.twitch.tv/helix/chat/messages`. La mise à jour du titre/catégorie utilise `PATCH https://api.twitch.tv/helix/channels` avec `channel:manage:broadcast`. Les scopes exacts doivent être demandés au minimum nécessaire, notamment `user:write:chat`, `user:read:chat`, `channel:manage:broadcast`, puis les scopes requis par les événements retenus.
+L’envoi utilise `POST https://api.twitch.tv/helix/chat/messages`. La mise à jour du titre/catégorie utilise `PATCH https://api.twitch.tv/helix/channels` avec `channel:manage:broadcast`. Les scopes demandés sont `user:read:chat`, `user:write:chat`, `channel:manage:broadcast`, `moderator:read:followers`, `channel:read:subscriptions` et `bits:read`, nécessaires aux fonctionnalités et événements EventSub retenus.
 
 Sources :
 
@@ -211,6 +212,10 @@ Socket.IO
 Chat ou fil d’actualité React
 ```
 
+### Recherche de catégorie
+
+Le dashboard appelle `GET /commands/categories?platform=twitch|kick&query=...` avec sa session. L’API recherche côté serveur via Twitch Helix Search Categories ou Kick Categories V2, normalise les résultats en `{ id, name, imageUrl }` et ne transmet jamais de jeton au navigateur. Le champ conserve l’identifiant propre à la plateforme et présente l’image ainsi que le nom dans les suggestions et après sélection. La recherche démarre à partir de trois caractères et les réponses obsolètes ne remplacent pas les résultats de la saisie courante.
+
 ### Envoi multi-plateforme
 
 Le frontend envoie le contenu et la liste des destinataires. L’API exécute une opération indépendante par plateforme connectée et renvoie un tableau de résultats. Un échec Kick ne doit pas annuler un envoi Twitch réussi.
@@ -240,6 +245,7 @@ Le formulaire envoie les changements souhaités par plateforme. L’API traduit 
 - Webhook : signature Kick valide/invalide, replay, réponse rapide et événements inconnus avec fixtures locales.
 - Temps réel : EventSub Twitch, reconnexion, resouscription et publication Socket.IO.
 - E2E : connexion Twitch/Kick, chat entrant, fil d’événements, envoi ciblé/multiple et mise à jour du titre.
+- Catégories : normalisation des réponses officielles, validation de la route authentifiée, sélection image/nom, états de recherche, navigation clavier et conservation des IDs par plateforme.
 
 ### Critères de réussite
 
@@ -251,6 +257,7 @@ Le formulaire envoie les changements souhaités par plateforme. L’API traduit 
 - Un refresh token permet de maintenir la connexion sans intervention pendant un live.
 - Les webhooks Kick invalides ou dupliqués ne modifient pas la session.
 - Aucun secret de plateforme n’est présent dans le bundle web ou les logs.
+- Les catégories sont recherchées via les APIs officielles et le formulaire affiche leur image et leur nom avant et après sélection.
 - Après la validation du MVP local, le tunnel Cloudflare nommé démarre avec l’environnement prévu et l’URL reste stable.
 
 ## 11. Commandes proposées
@@ -324,4 +331,3 @@ docker compose -f compose.prod.yaml down
 - [ ] Image de service retenue pour servir le build SSG du frontend en production locale.
 - [ ] Framework de tests API à retenir, distinct de Vitest.
 - [ ] Framework E2E navigateur à retenir en complément de Vitest web.
-

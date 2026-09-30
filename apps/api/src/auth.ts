@@ -28,7 +28,14 @@ export const auth = betterAuth({
           twitch: {
             clientId: process.env.TWITCH_CLIENT_ID,
             clientSecret: process.env.TWITCH_CLIENT_SECRET,
-            scope: ['user:read:chat', 'user:write:chat', 'channel:manage:broadcast'],
+            scope: [
+              'user:read:chat',
+              'user:write:chat',
+              'channel:manage:broadcast',
+              'moderator:read:followers',
+              'channel:read:subscriptions',
+              'bits:read',
+            ],
           },
         }
       : {}),

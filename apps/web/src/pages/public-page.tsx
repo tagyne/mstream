@@ -8,6 +8,7 @@ export function PublicPage({ title, children }: { title: string; children: strin
       <p>{children}</p>
       <nav aria-label="Navigation principale">
         <Link to="/">Accueil</Link>
+        {import.meta.env.DEV && <Link to="/dashboard">Dashboard</Link>}
         <Link to="/login">Connexion</Link>
         <Link to="/help">Aide</Link>
       </nav>

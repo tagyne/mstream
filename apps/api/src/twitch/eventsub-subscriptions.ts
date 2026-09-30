@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import type { TwitchEventSubClient } from './eventsub.client';
 
 export type TwitchSubscriptionSpec = {
@@ -6,9 +7,8 @@ export type TwitchSubscriptionSpec = {
   condition: Record<string, string>;
 };
 
-type SubscriptionResponse = { data?: unknown[] };
-
 export class TwitchEventSubSubscriptionManager {
+  private readonly logger = new Logger(TwitchEventSubSubscriptionManager.name);
   private unsubscribe?: () => void;
 
   constructor(
@@ -20,7 +20,9 @@ export class TwitchEventSubSubscriptionManager {
   ) {}
 
   start(): void {
-    this.unsubscribe = this.client.onSessionWelcome((sessionId) => this.resubscribe(sessionId));
+    this.unsubscribe = this.client.onSessionWelcome((sessionId) => {
+      void this.resubscribe(sessionId).catch((error: unknown) => this.logger.error(error));
+    });
   }
 
   stop(): void {
@@ -29,7 +31,7 @@ export class TwitchEventSubSubscriptionManager {
   }
 
   async resubscribe(sessionId: string): Promise<void> {
-    await Promise.all(
+    const results = await Promise.allSettled(
       this.subscriptions.map(async (subscription) => {
         const response = await this.fetchImpl(
           'https://api.twitch.tv/helix/eventsub/subscriptions',
@@ -48,10 +50,17 @@ export class TwitchEventSubSubscriptionManager {
             }),
           },
         );
-        if (!response.ok)
-          throw new Error(`Twitch EventSub subscription failed with ${response.status}`);
-        (await response.json()) as Promise<SubscriptionResponse>;
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
       }),
     );
+    const failures = results.flatMap((result, index) =>
+      result.status === 'rejected'
+        ? [
+            `${this.subscriptions[index].type}: ${result.reason instanceof Error ? result.reason.message : 'request failed'}`,
+          ]
+        : [],
+    );
+    if (failures.length)
+      throw new Error(`Twitch EventSub subscriptions failed: ${failures.join('; ')}`);
   }
 }
