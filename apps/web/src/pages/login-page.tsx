@@ -42,6 +42,7 @@ export function LoginPage() {
       )}
       <nav aria-label="Navigation principale">
         <Link to="/">Accueil</Link>
+        {import.meta.env.DEV && <Link to="/dashboard">Dashboard sans connexion</Link>}
         <Link to="/help">Aide</Link>
       </nav>
     </main>

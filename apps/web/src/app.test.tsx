@@ -1,6 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { App } from './app';
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+});
 
 describe('public application shell', () => {
   it('renders the local multistreaming landing page', () => {
@@ -8,6 +13,7 @@ describe('public application shell', () => {
 
     expect(screen.getByRole('heading', { name: /multistreaming/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Connexion' })).toHaveAttribute('href', '/login');
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/dashboard');
   });
 });
 
@@ -23,7 +29,18 @@ describe('login page', () => {
 });
 
 describe('dashboard session guard', () => {
-  it('redirects to login when the API has no session', async () => {
+  it('opens the dashboard without a session in development', async () => {
+    vi.stubEnv('DEV', true);
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    window.history.pushState({}, '', '/dashboard');
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('redirects to login when the API has no session in production', async () => {
+    vi.stubEnv('DEV', false);
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => new Response('{}', { status: 401 })),
@@ -33,6 +50,5 @@ describe('dashboard session guard', () => {
     await waitFor(() =>
       expect(screen.getByRole('heading', { name: 'Connexion' })).toBeInTheDocument(),
     );
-    vi.unstubAllGlobals();
   });
 });

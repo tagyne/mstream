@@ -44,9 +44,10 @@ function AuthenticatedDashboard() {
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const [checked, setChecked] = useState(false);
+  const [checked, setChecked] = useState(import.meta.env.DEV);
 
   useEffect(() => {
+    if (import.meta.env.DEV) return;
     let active = true;
     void getSession()
       .then((session) => {
