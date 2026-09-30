@@ -113,3 +113,35 @@ test('Twitch channel read reports expired authorization without exposing credent
     },
   );
 });
+
+test('Twitch category search normalizes Helix categories and requests bounded results', async () => {
+  let url = '';
+  let headers: HeadersInit | undefined;
+  const client = new TwitchHelixClient({
+    baseUrl: 'https://twitch.test',
+    fetchImpl: async (requestUrl, init) => {
+      url = String(requestUrl);
+      headers = init?.headers;
+      return new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: '123',
+              name: 'Jeux vidéo',
+              box_art_url: 'https://img.test/{width}x{height}.jpg',
+            },
+          ],
+        }),
+      );
+    },
+  });
+
+  assert.deepEqual(
+    await client.searchCategories({ accessToken: 'secret', clientId: 'client', query: 'jeux' }),
+    [{ id: '123', name: 'Jeux vidéo', imageUrl: 'https://img.test/52x72.jpg' }],
+  );
+  assert.equal(new URL(url).pathname, '/search/categories');
+  assert.equal(new URL(url).searchParams.get('query'), 'jeux');
+  assert.equal(new URL(url).searchParams.get('first'), '20');
+  assert.equal(new Headers(headers).get('Authorization'), 'Bearer secret');
+});

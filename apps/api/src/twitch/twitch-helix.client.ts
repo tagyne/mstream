@@ -1,5 +1,10 @@
-import type { OutboundMessageResult, StreamMetadataResult } from '@mstream/contracts';
+import type {
+  OutboundMessageResult,
+  StreamCategory,
+  StreamMetadataResult,
+} from '@mstream/contracts';
 import { mapHttpFailure } from '../shared/http-result';
+import { secureImageUrl } from '../shared/secure-image-url';
 
 export type TwitchHelixClientOptions = {
   baseUrl?: string;
@@ -86,6 +91,35 @@ export class TwitchHelixClient {
     } catch {
       return { platform: 'twitch', status: 'network-error', message: 'Twitch API request failed' };
     }
+  }
+
+  async searchCategories(input: {
+    accessToken: string;
+    clientId: string;
+    query: string;
+  }): Promise<StreamCategory[]> {
+    const params = new URLSearchParams({ query: input.query, first: '20' });
+    const response = await this.fetchImpl(`${this.baseUrl}/search/categories?${params}`, {
+      headers: this.headers(input.accessToken, input.clientId),
+    });
+    if (!response.ok) throw new Error(`Twitch category search failed with ${response.status}`);
+    const body = (await response.json()) as {
+      data?: Array<{ id?: unknown; name?: unknown; box_art_url?: unknown }>;
+    };
+    return (body.data ?? []).flatMap((category) => {
+      if (
+        typeof category.id !== 'string' ||
+        !category.id ||
+        typeof category.name !== 'string' ||
+        !category.name.trim() ||
+        typeof category.box_art_url !== 'string'
+      )
+        return [];
+      const imageUrl = secureImageUrl(
+        category.box_art_url.replace('{width}', '52').replace('{height}', '72'),
+      );
+      return imageUrl ? [{ id: category.id, name: category.name, imageUrl }] : [];
+    });
   }
 
   async updateStream(input: {

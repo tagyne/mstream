@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Patch, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Patch, Post, Query } from '@nestjs/common';
 import { Session, UserSession } from '@thallesp/nestjs-better-auth';
 import type { Platform } from '@mstream/contracts';
 import { PlatformCommandService } from './platform-command.service';
@@ -10,6 +10,29 @@ export class PlatformCommandController {
   @Get('stream')
   getStream(@Session() session: UserSession) {
     return this.commands.getStreamForUser(session.user.id);
+  }
+
+  @Get('categories')
+  searchCategories(
+    @Query('platform') platform: string,
+    @Query('query') query: string,
+    @Session() session: UserSession,
+  ) {
+    const normalizedPlatform = platform?.trim();
+    const normalizedQuery = query?.trim();
+    if (
+      (normalizedPlatform !== 'twitch' && normalizedPlatform !== 'kick') ||
+      !normalizedQuery ||
+      normalizedQuery.length < 3 ||
+      normalizedQuery.length > 100
+    ) {
+      throw new BadRequestException('A valid platform and a 3 to 100 character query are required');
+    }
+    return this.commands.searchCategoriesForUser(
+      session.user.id,
+      normalizedPlatform,
+      normalizedQuery,
+    );
   }
 
   @Patch('stream')
