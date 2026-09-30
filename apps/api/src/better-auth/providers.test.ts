@@ -10,6 +10,14 @@ test('built-in Twitch and Kick providers are configured with account linking and
   process.env.KICK_CLIENT_SECRET = 'kick-secret';
   const { auth } = await import('../auth');
   assert.deepEqual(Object.keys(auth.options.socialProviders ?? {}).sort(), ['kick', 'twitch']);
+  assert.deepEqual(auth.options.socialProviders?.twitch?.scope, [
+    'user:read:chat',
+    'user:write:chat',
+    'channel:manage:broadcast',
+    'moderator:read:followers',
+    'channel:read:subscriptions',
+    'bits:read',
+  ]);
   assert.equal(auth.options.account?.encryptOAuthTokens, true);
   assert.ok(auth.options.disabledPaths?.includes('/get-access-token'));
   assert.ok(auth.options.disabledPaths?.includes('/refresh-token'));

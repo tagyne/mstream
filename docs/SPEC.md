@@ -103,7 +103,7 @@ Le frontend ne contacte jamais directement Twitch ou Kick. Les tokens et secrets
 
 Le backend utilise OAuth 2.0 Authorization Code pour obtenir un token utilisateur. EventSub WebSocket reçoit notamment `channel.chat.message`, `channel.chat.notification`, `channel.follow`, `channel.subscribe`, `channel.subscription.gift`, `channel.cheer` et `channel.update`. La connexion doit traiter le message de bienvenue, les keepalive, les reconnexions et les doublons.
 
-L’envoi utilise `POST https://api.twitch.tv/helix/chat/messages`. La mise à jour du titre/catégorie utilise `PATCH https://api.twitch.tv/helix/channels` avec `channel:manage:broadcast`. Les scopes exacts doivent être demandés au minimum nécessaire, notamment `user:write:chat`, `user:read:chat`, `channel:manage:broadcast`, puis les scopes requis par les événements retenus.
+L’envoi utilise `POST https://api.twitch.tv/helix/chat/messages`. La mise à jour du titre/catégorie utilise `PATCH https://api.twitch.tv/helix/channels` avec `channel:manage:broadcast`. Les scopes demandés sont `user:read:chat`, `user:write:chat`, `channel:manage:broadcast`, `moderator:read:followers`, `channel:read:subscriptions` et `bits:read`, nécessaires aux fonctionnalités et événements EventSub retenus.
 
 Sources :
 
