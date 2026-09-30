@@ -453,6 +453,11 @@ input[type='radio'] {
   gap: var(--space-4);
   color: var(--color-text-secondary);
 }
+.recipient-list .stream-platform-active {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+}
 .recipient-list label {
   display: inline-flex;
   align-items: center;

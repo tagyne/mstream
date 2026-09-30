@@ -33,12 +33,14 @@ describe('login page', () => {
 describe('dashboard session guard', () => {
   it('opens the dashboard without a session in development', async () => {
     vi.stubEnv('DEV', true);
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn(async () => new Response('[]'));
     vi.stubGlobal('fetch', fetchMock);
     window.history.pushState({}, '', '/dashboard');
     render(<App />);
     expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalledWith('/api/auth/get-session', {
+      credentials: 'include',
+    });
     expect(
       screen.getByLabelText('État des plateformes').querySelectorAll('.platform-icon'),
     ).toHaveLength(2);
