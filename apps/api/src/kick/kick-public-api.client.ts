@@ -1,4 +1,4 @@
-import type { OutboundMessageResult } from '@mstream/contracts';
+import type { OutboundMessageResult, StreamMetadataResult } from '@mstream/contracts';
 import { mapHttpFailure } from '../shared/http-result';
 
 export type KickPublicApiClientOptions = { baseUrl?: string; fetchImpl?: typeof fetch };
@@ -30,6 +30,45 @@ export class KickPublicApiClient {
         return mapHttpFailure('kick', response.status, await this.errorMessage(response));
       const body = (await response.json().catch(() => ({}))) as { message_id?: string };
       return { platform: 'kick', status: 'success', externalId: body.message_id };
+    } catch {
+      return { platform: 'kick', status: 'network-error', message: 'Kick API request failed' };
+    }
+  }
+
+  async getStream(accessToken: string): Promise<StreamMetadataResult> {
+    try {
+      const response = await this.fetchImpl(`${this.baseUrl}/channels`, {
+        headers: this.headers(accessToken),
+      });
+      if (!response.ok)
+        return mapHttpFailure('kick', response.status, await this.errorMessage(response));
+      const body = (await response.json()) as {
+        data?: Array<{
+          stream_title?: unknown;
+          category?: { id?: unknown; name?: unknown } | null;
+        }>;
+      };
+      const channel = body.data?.[0];
+      if (typeof channel?.stream_title !== 'string')
+        return {
+          platform: 'kick',
+          status: 'rejected',
+          message: 'Kick channel data is unavailable',
+        };
+      const category = channel.category;
+      if (category && (typeof category.id !== 'number' || typeof category.name !== 'string'))
+        return {
+          platform: 'kick',
+          status: 'rejected',
+          message: 'Kick category data is unavailable',
+        };
+      return {
+        platform: 'kick',
+        status: 'success',
+        title: channel.stream_title,
+        categoryId: category ? String(category.id) : '',
+        categoryName: category && typeof category.name === 'string' ? category.name : '',
+      };
     } catch {
       return { platform: 'kick', status: 'network-error', message: 'Kick API request failed' };
     }

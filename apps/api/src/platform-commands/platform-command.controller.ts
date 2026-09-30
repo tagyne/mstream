@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Patch, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Patch, Post } from '@nestjs/common';
 import { Session, UserSession } from '@thallesp/nestjs-better-auth';
 import type { Platform } from '@mstream/contracts';
 import { PlatformCommandService } from './platform-command.service';
@@ -6,6 +6,11 @@ import { PlatformCommandService } from './platform-command.service';
 @Controller('commands')
 export class PlatformCommandController {
   constructor(private readonly commands: PlatformCommandService) {}
+
+  @Get('stream')
+  getStream(@Session() session: UserSession) {
+    return this.commands.getStreamForUser(session.user.id);
+  }
 
   @Patch('stream')
   updateStream(@Body() body: unknown, @Session() session: UserSession) {

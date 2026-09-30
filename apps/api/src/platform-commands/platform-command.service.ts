@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { OutboundMessageResult, Platform } from '@mstream/contracts';
+import type { OutboundMessageResult, Platform, StreamMetadataResult } from '@mstream/contracts';
 import { PlatformAccountTokenService } from '../better-auth/platform-account-token.service';
 import { KickPublicApiClient } from '../kick/kick-public-api.client';
 import { TwitchHelixClient } from '../twitch/twitch-helix.client';
@@ -44,6 +44,35 @@ export class PlatformCommandService {
             platform,
             status: 'network-error' as const,
             message: `${platform} command failed`,
+          };
+        }
+      }),
+    );
+  }
+
+  async getStreamForUser(userId: string): Promise<StreamMetadataResult[]> {
+    return Promise.all(
+      (['twitch', 'kick'] as const).map(async (platform) => {
+        try {
+          const account = await this.accounts.getForUser(userId, platform);
+          if (!account)
+            return {
+              platform,
+              status: 'rejected' as const,
+              message: `${platform} is not connected`,
+            };
+          return platform === 'twitch'
+            ? this.twitch.getStream({
+                accessToken: account.accessToken,
+                clientId: process.env.TWITCH_CLIENT_ID ?? '',
+                broadcasterId: account.externalId,
+              })
+            : this.kick.getStream(account.accessToken);
+        } catch {
+          return {
+            platform,
+            status: 'rejected' as const,
+            message: `${platform} connection could not be used`,
           };
         }
       }),

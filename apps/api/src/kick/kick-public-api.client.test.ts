@@ -29,3 +29,37 @@ test('Kick client uses Categories V2 for searches', async () => {
   assert.deepEqual(await client.searchCategories('secret', 'games'), [{ id: 1 }]);
   assert.match(url, /public%2Fv2|public\/v2/);
 });
+
+test('Kick client reads current title and category from authenticated channel', async () => {
+  let url = '';
+  const client = new KickPublicApiClient({
+    baseUrl: 'https://kick.test/public/v1',
+    fetchImpl: async (requestUrl) => {
+      url = String(requestUrl);
+      return new Response(
+        JSON.stringify({
+          data: [{ stream_title: 'Kick live', category: { id: 77, name: 'Art' } }],
+        }),
+      );
+    },
+  });
+  assert.deepEqual(await client.getStream('secret'), {
+    platform: 'kick',
+    status: 'success',
+    title: 'Kick live',
+    categoryId: '77',
+    categoryName: 'Art',
+  });
+  assert.equal(url, 'https://kick.test/public/v1/channels');
+});
+
+test('Kick channel read rejects malformed channel data', async () => {
+  const client = new KickPublicApiClient({
+    fetchImpl: async () => new Response(JSON.stringify({ data: [{}] })),
+  });
+  assert.deepEqual(await client.getStream('secret'), {
+    platform: 'kick',
+    status: 'rejected',
+    message: 'Kick channel data is unavailable',
+  });
+});

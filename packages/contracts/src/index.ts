@@ -13,12 +13,7 @@ export type UnifiedMessage = {
 };
 
 export type UnifiedEventType =
-  | 'follow'
-  | 'subscription'
-  | 'gift'
-  | 'cheer'
-  | 'kick'
-  | 'stream-update';
+  'follow' | 'subscription' | 'gift' | 'cheer' | 'kick' | 'stream-update';
 
 export type UnifiedEvent = {
   platform: Platform;
@@ -38,13 +33,21 @@ export type PlatformStatus =
       message?: string;
     };
 
+export type StreamMetadataResult = {
+  platform: Platform;
+  status: OutboundMessageResult['status'];
+  title?: string;
+  categoryId?: string;
+  categoryName?: string;
+  message?: string;
+};
+
 export type OutboundMessageResult = {
   platform: Platform;
   status: 'success' | 'rejected' | 'rate-limited' | 'token-expired' | 'network-error';
   externalId?: string;
   message?: string;
 };
-
 
 export type LiveSessionSnapshot = {
   messages: UnifiedMessage[];

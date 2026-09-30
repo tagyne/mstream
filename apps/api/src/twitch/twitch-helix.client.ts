@@ -1,4 +1,4 @@
-import type { OutboundMessageResult } from '@mstream/contracts';
+import type { OutboundMessageResult, StreamMetadataResult } from '@mstream/contracts';
 import { mapHttpFailure } from '../shared/http-result';
 
 export type TwitchHelixClientOptions = {
@@ -45,6 +45,44 @@ export class TwitchHelixClient {
       if (!result?.is_sent)
         return { platform: 'twitch', status: 'rejected', message: result?.drop_reason?.message };
       return { platform: 'twitch', status: 'success', externalId: result.message_id };
+    } catch {
+      return { platform: 'twitch', status: 'network-error', message: 'Twitch API request failed' };
+    }
+  }
+
+  async getStream(input: {
+    accessToken: string;
+    clientId: string;
+    broadcasterId: string;
+  }): Promise<StreamMetadataResult> {
+    const query = new URLSearchParams({ broadcaster_id: input.broadcasterId });
+    try {
+      const response = await this.fetchImpl(`${this.baseUrl}/channels?${query}`, {
+        headers: this.headers(input.accessToken, input.clientId),
+      });
+      if (!response.ok)
+        return mapHttpFailure('twitch', response.status, await this.errorMessage(response));
+      const body = (await response.json()) as {
+        data?: Array<{ title?: unknown; game_id?: unknown; game_name?: unknown }>;
+      };
+      const channel = body.data?.[0];
+      if (
+        typeof channel?.title !== 'string' ||
+        typeof channel.game_id !== 'string' ||
+        typeof channel.game_name !== 'string'
+      )
+        return {
+          platform: 'twitch',
+          status: 'rejected',
+          message: 'Twitch channel data is unavailable',
+        };
+      return {
+        platform: 'twitch',
+        status: 'success',
+        title: channel.title,
+        categoryId: channel.game_id,
+        categoryName: channel.game_name,
+      };
     } catch {
       return { platform: 'twitch', status: 'network-error', message: 'Twitch API request failed' };
     }

@@ -61,3 +61,41 @@ test('user commands use the linked Better Auth account token', async () => {
   assert.deepEqual(result, [success]);
   assert.equal(receivedToken, 'fresh-token');
 });
+
+test('stream metadata reads both linked accounts and preserves a platform failure', async () => {
+  const service = new PlatformCommandService(
+    {
+      getStream: async () => ({
+        platform: 'twitch',
+        status: 'success',
+        title: 'Live',
+        categoryId: '1',
+        categoryName: 'Games',
+      }),
+    } as never,
+    {
+      getStream: async () => ({
+        platform: 'kick',
+        status: 'network-error',
+        message: 'Kick API request failed',
+      }),
+    } as never,
+    {
+      getForUser: async (_userId: string, platform: string) => ({
+        externalId: platform === 'twitch' ? '42' : '77',
+        accessToken: 'secret',
+        scopes: [],
+      }),
+    } as never,
+  );
+  assert.deepEqual(await service.getStreamForUser('user-1'), [
+    {
+      platform: 'twitch',
+      status: 'success',
+      title: 'Live',
+      categoryId: '1',
+      categoryName: 'Games',
+    },
+    { platform: 'kick', status: 'network-error', message: 'Kick API request failed' },
+  ]);
+});
